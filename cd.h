@@ -3,5 +3,5 @@
 
 // Functions goes here
 int foo(int x);
-
+void cd();
 #endif

@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "cd.h"
 /* If our preference is using different files:
 
@@ -9,13 +11,23 @@
 */
 
 
-int main(void){
-    printf("lets do this! #shell #deadline20maj");
-    int y = foo(5);
-    printf("lol\n\n\n");
-    printf("%d\n", y);
+void input(int argc, char *argv[], char *envp[]){
+    char c = '\0';
+    printf("\ndees_a_bitch_OS > ");
+    while(c != EOF) {
+        c = getchar();
+        if(c == '\n')
+            printf("dees_a_bitch_OS > ");
+    }
+    printf("\n");
+
+}
+
+int main(int argc, char *argv[], char *envp[]){
+    input(argc, argv, envp);
     return 0;
 }
+
 
 /* TODO: Exit
     which terminates all remaining processes started
