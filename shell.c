@@ -13,8 +13,11 @@
 
 void input(int argc, char *argv[], char *envp[]){
     char c = '\0';
+    // shell prompt
     printf("\ndees_a_bitch_OS > ");
+    // read from stdin forever
     while(c != EOF) {
+    // read all chars until newline
         c = getchar();
         if(c == '\n')
             printf("dees_a_bitch_OS > ");
@@ -24,6 +27,7 @@ void input(int argc, char *argv[], char *envp[]){
 }
 
 int main(int argc, char *argv[], char *envp[]){
+    // send correct parameters to input function
     input(argc, argv, envp);
     return 0;
 }
