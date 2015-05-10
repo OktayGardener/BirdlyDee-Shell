@@ -25,7 +25,6 @@ void changedir(char *args){
     }
 }
 
-
 /*
 main måste alltid vara längst ner
 */
@@ -71,6 +70,12 @@ int main(){
         if(instr[0] == 'c' && instr[1] == 'd'){
                 changedir(instr);
             }
+
+        if(strcmp(instr, "lol") == 0) {
+            printf("OMGPAGERRR: %s", getenv("PAGER"));
+
+        }
+
         }
         /* create new process*/
 
