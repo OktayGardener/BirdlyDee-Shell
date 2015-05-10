@@ -14,7 +14,7 @@
 extern char **environ;
 
 
-void checkEnv(char *args, char **envp){
+void checkEnv(char *args, char **envp, char **env){
     char *cmd;
     int PAGER;
     /* get argument after printenv */
@@ -26,7 +26,6 @@ void checkEnv(char *args, char **envp){
     }
     printf("\nOMGPAGERRR: %s", getenv("PAGER"));
     /* Prints the user ENVIROMENT variable */
-    char** env;
     if(strcmp(getenv("PAGER"), "less") ){
         PAGER = 80;
     }
@@ -65,6 +64,7 @@ int main(int argc,char** envp){
     char pwd[PATH_WORKING_DIRECTORY];
     char *command;
     char *instr;
+    char** env;
     int stdinchar = 0;
     errno = 0;
 
@@ -103,7 +103,7 @@ int main(int argc,char** envp){
         } else if(instr[0] == 'p' && instr[1] == 'r' && instr[2] == 'i' && instr[3] == 'n'
             && instr[4] == 't' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
 
-        checkEnv(instr, environ);
+        checkEnv(instr, environ, env);
         } else {
 			printf("LOL");
 			 pid = fork();
@@ -113,7 +113,6 @@ int main(int argc,char** envp){
 						printf("Child process\n");
 
 						execlp(inbuffer, inbuffer, NULL);
-
 
 					} else { //parent process
 						printf("Parent Process\n");
