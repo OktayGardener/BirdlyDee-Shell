@@ -19,6 +19,9 @@ void checkEnv(char *args, char **envp, char **env){
     /* get argument after printenv */
     cmd = strtok(args, " | ");
 
+    if(strcmp(cmd, "printenv") == 0) {
+
+    }
     while(cmd != NULL){
         printf("%s\n", cmd);
         cmd = strtok(NULL, " | ");
@@ -62,7 +65,6 @@ void newprocess (char inbuffer[]) {
 			printf("Fork successfull!\n");
 			if(pid == 0) { //child process
 				printf("Child process\n");
-	
 
 				execlp(inbuffer, inbuffer, NULL);
 
@@ -70,7 +72,6 @@ void newprocess (char inbuffer[]) {
 				printf("Parent Process\n");
 			}
 		}
-	
 }
 
 
@@ -126,7 +127,7 @@ int main(int argc,char** envp){
         } else {
 			newprocess(inbuffer);
 		}
-	
+
     }
         /* create new process*/
 }
