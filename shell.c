@@ -53,6 +53,25 @@ void changedir(char *args){
     }
 }
 
+void newfunction (char inbuffer[]) {
+		pid_t pid;
+		printf("LOL");
+		pid = fork();
+		if(pid >= 0){
+			printf("Fork successfull!\n");
+			if(pid == 0) { //child process
+				printf("Child process\n");
+	
+
+				execlp(inbuffer, inbuffer, NULL);
+
+			} else { //parent process
+				printf("Parent Process\n");
+			}
+		}
+	
+}
+
 
 /*
 main måste alltid vara längst ner
@@ -104,22 +123,11 @@ int main(int argc,char** envp){
 
         checkEnv(instr, environ, env);
         } else {
-			printf("LOL");
-			 pid = fork();
-				if(pid >= 0){
-					printf("Fork successfull!\n");
-					if(pid == 0) { //child process
-						printf("Child process\n");
-
-						execlp(inbuffer, inbuffer, NULL);
-
-					} else { //parent process
-						printf("Parent Process\n");
-					}
-				}
-			}
-
+			newfunction(inbuffer);
+		}
+	
     }
         /* create new process*/
-    }
+}
+
 
