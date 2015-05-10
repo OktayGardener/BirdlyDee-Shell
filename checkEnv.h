@@ -2,6 +2,6 @@
 #define CHECKENV_H
 
 // Functions goes here
-void checkEnv();
+void checkEnv(char *args);
 
 #endif

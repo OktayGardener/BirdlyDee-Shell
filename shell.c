@@ -7,6 +7,7 @@
 #include "shell.h"
 #include "cd.h"
 #include "exit.h"
+#include "checkenv.h"
 
 
 /* Definitions */
@@ -74,9 +75,9 @@ int main(){
                 changedir(instr);
             }
 
-        if(strcmp(instr, "lol") == 0) {
-            printf("OMGPAGERRR: %s", getenv("PAGER"));
-
+        if(instr[0] == 'p' && instr[1] == 'r' && instr[2] == 'i' && instr[3] == 'n'
+            && instr[4] == 't' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
+            checkEnv(instr);
         }
 
     }
