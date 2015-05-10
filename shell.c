@@ -54,7 +54,7 @@ void changedir(char *args){
     }
 }
 
-void newfunction (char inbuffer[]) {
+void newprocess (char inbuffer[]) {
 		pid_t pid;
 		printf("LOL");
 		pid = fork();
@@ -124,7 +124,7 @@ int main(int argc,char** envp){
 
         checkEnv(instr, environ, env);
         } else {
-			newfunction(inbuffer);
+			newprocess(inbuffer);
 		}
 	
     }
