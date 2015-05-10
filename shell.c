@@ -13,30 +13,7 @@
 
 extern char **environ;
 
-void checkEnv(char *args, char **envp, char **env){
-    char *cmd;
-    int PAGER;
-    /* get argument after printenv */
-    cmd = strtok(args, " | ");
 
-    if(strcmp(cmd, "printenv") == 0) {
-
-    }
-    while(cmd != NULL){
-        printf("%s\n", cmd);
-        cmd = strtok(NULL, " | ");
-    }
-    printf("\nOMGPAGERRR: %s", getenv("PAGER"));
-    /* Prints the user ENVIROMENT variable */
-    if(strcmp(getenv("PAGER"), "less") ){
-        PAGER = 80;
-    }
-    for (env = envp; *env != 0; env++)
-    {
-        char* thisEnv = *env;
-        printf("%s\n", thisEnv);
-    }
-}
 
 void changedir(char *args){
     char *cmd;
@@ -57,7 +34,7 @@ void changedir(char *args){
     }
 }
 
-void newprocess (char inbuffer[]) {
+void newprocess(char inbuffer[]) {
 		pid_t pid;
 		printf("LOL");
 		pid = fork();
@@ -91,15 +68,28 @@ void newprocess (char inbuffer[]) {
 		}
 }
 
+void checkEnv(char args[]){
+    char *cmd;
+    int PAGER;
+    /* get argument after printenv */
+    cmd = strtok(args, " | ");
+
+    if(strcmp(cmd, "printenv") == 0) {
+        newprocess(args);
+    }
+
+    while(cmd != NULL){
+        printf("%s\n", cmd);
+        cmd = strtok(NULL, " | ");
+    }
+}
 
 /*
 main måste alltid vara längst ner
 */
 int main(int argc,char** envp){
-    pid_t pid;
     char inbuffer[MAX_INPUT];
     char pwd[PATH_WORKING_DIRECTORY];
-    char *command;
     char *instr;
     char **env = 0;
     int stdinchar = 0;
@@ -140,12 +130,12 @@ int main(int argc,char** envp){
         } else if(instr[0] == 'p' && instr[1] == 'r' && instr[2] == 'i' && instr[3] == 'n'
             && instr[4] == 't' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
 
-        checkEnv(instr, environ, env);
+        checkEnv(inbuffer);
         } else {
-			newprocess(inbuffer);
+        /* create new process*/
+    		newprocess(inbuffer);
 		}
 
     }
-        /* create new process*/
 }
 
