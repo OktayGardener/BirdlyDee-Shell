@@ -14,7 +14,6 @@
 extern char **environ;
 
 
-
 void changedir(char *args){
     char *cmd;
     /* get argument after cd */
@@ -43,7 +42,7 @@ void newprocess(char inbuffer[]) {
 			if(pid == 0) { //child process
 				printf("Child process, pid: %u\n", getpid());
 
-				char ** res; NULL;
+				char ** res = NULL;
 				char * p = strtok(inbuffer, " ");
 				int n_spaces= 0, i;
 
