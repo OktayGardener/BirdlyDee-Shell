@@ -3,141 +3,81 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include "shell.h"
-/* If our preference is using different files:
-
-#include "exit.h"
-#include "cd.h"
-#include "checkEnv.h"
-
-*/
 
 /* Definitions */
 #define MAX_INPUT 80
+#define PATH_WORKING_DIRECTORY 80
+#define FOREVER '\0'
 #define DELIMS " \t\r\n"
 
-
-void input(int argc, char *argv[]){
+void changedir(char *args){
     char *cmd;
-    char line[MAX_INPUT];
-    char c = '\0';
-
-    while(c != EOF){
-        printf("dees_a_bitch_shell > ");
-        /* Too big input, exit */
-        if (!fgets(line, MAX_INPUT, stdin))
-            break;
-
-        if ((cmd = strtok(line, DELIMS))) {
-            printf("%s\n", cmd);
-          // Clear errors
-          errno = 0;
-          /* Change directory */
-            if (strcmp(cmd, "cd") == 0) {
-                /* get the arguments after cd */
-                char *arg = strtok(0, DELIMS);
-
-                if (!arg)
-                    fprintf(stderr, "cd missing argument\n");
-                else
-                    chdir(arg);
-            /* Exit the shell */
-            } else if (strcmp(cmd, "exit") == 0) {
-                printf("bye dee you fucking bitch");
-                break;
-
-            } else system(line);
-            /* Anything else than ls, cd, exit */
-            if (errno) perror("Command failed");
-            }
+    printf("%s\n", args);
+    /* get argument after cd */
+    cmd = strtok(args, "cd ");
+    if(strcmp(cmd, "~") == 0) {
+        chdir(getenv("HOME"));
+    } else {
+        chdir(cmd);
+        if (errno) perror("Command failed");
     }
 }
-/*
-void input2(int argc, char *argv[]){
-    char *cmd;
-    char line[MAX_INPUT];
-    char c = '\0';
-
-    while(c != EOF){
-        printf("dees_a_bitch_shell > ");
-        if (!fgets(line, MAX_INPUT, stdin))
-            break;
-        cmd = strtok(line, DELIMS);
-        int cd = strcmp(cmd, "cd");
-
-        switch(*cmd){
-            case cd == 0:
-                if (!arg)
-                    fprintf(stderr, "cd missing argument\n");
-                    break;
-                else
-                    chdir(arg);
-                    break;
-        }
-    }
-}
-*/
 
 /*
 main måste alltid vara längst ner
 */
-int main(int argc, char *argv[]){
-    input(argc, argv);
-    return 0;
-}
+int main(){
+    pid_t pid;
+    char inbuffer[MAX_INPUT];
+    char pwd[PATH_WORKING_DIRECTORY];
+    char *command;
+    char *instr;
+    int stdinchar = 0;
+    errno = 0;
 
+    /* Shell info */
+    printf("\n\nShell for KTH OS Course, using C.\n");
+    printf("\nWelcome to BirdlyDee Shell! Remember: Dee's a bird!\n");
+    printf("Created by Oktay Bahceci and Simon Orresson\n\n");
 
-    /* TODO: Exit
-        which terminates all remaining processes started
-        from the shell in an orderly manner before exiting the shell itself
+    /* Set the path */
+    setenv("PATH", "/bin:/usr/bin", 1);
 
-        Idea:
-            clean memory, kick out, hehe
-    */
-    /*void exit(){
+    while(FOREVER != EOF){
+        /* Get the name of the current working directory, store it in pwd */
+        getcwd(pwd, MAX_INPUT); /* char* getcwd(char* buffer, size_t size ); */
+        /* Print shell name and working directory */
+        printf("birdly_dee:%s$ ", pwd);
+        /* Read data from stdin, if we can't, stop the program */
+        if (!fgets(inbuffer, MAX_INPUT, stdin)){
+            printf("\nFATAL ERROR: Could not read data from stdin.\n");
+            break;
+        }
+
+        /* Last character in the inbuffer is a nullpointer */
+        inbuffer[strlen(inbuffer)-1] = '\0';
+
+        /* Retrieve number of characters of the input */
+        while(inbuffer[stdinchar] == ' ' && stdinchar < strlen(inbuffer)) stdinchar++;
+        /* Point at the adress where the char array of the input is */
+        instr = &inbuffer[stdinchar];
+
+        /* strcmp(x,y) == 0 if the strings match */
+        if(strcmp(instr, "exit") == 0) break;
+
+        if(instr[0] == 'c' && instr[1] == 'd'){
+                changedir(instr);
+            }
+
+        if(strcmp(instr, "lol") == 0) {
+            printf("OMGPAGERRR: %s", getenv("PAGER"));
+
+        }
 
     }
-    */
-
-    /* TODO: cd
-        which should behave exactly as a normal built-in command "cd"
-        with the exception that you do not need explicitly
-        to update environment variables.
-
-        Idea:
-            recursive
-    */
-    /*
-    void cd(){
+        /* create new process*/
 
     }
-    */
 
-    /* TODO: checkEnv
-    a built-in command "checkEnv" which should execute "printenv | sort | pager"
-    if no arguments are given to the command. If arguments are passed to the
-    command then "printenv | grep <arguments> | sort | pager" should be executed.
-    The pager executed should be selected primarily based on the value of the
-    users "PAGER" environment variable. If no such variable is set then one should
-    first try to execute "less" and if that fails "more".
-    Any errors in the execution of the pipeline should be handled in a
-    nice manner (i.e. similar to how your normal shell handles errors
-    in the execution of a manually set up pipeline).
-    */
-
-    /*
-    void checkEnv(){
-        printf("hejhejhej, jag är bara fjorton år, snälla, printa, sorta och pagea mig #populär");
-    }
-    */
-
-
-    /* TODO: Witch craft
-    Detection of terminated background process should be implemented by two
-    mechanisms where one selects which should be compiled at compilation time.
-    The mechanisms are ordinary polling and detection by signals sent from the
-    child processes. The user should be able to select which mechanism to use
-    by defining a macro SIGDET=1 at compilation time to have termination detected
-    by signals. If SIGDET is undefined or equals zero then termination should be
-    detected by polling.
-    */
