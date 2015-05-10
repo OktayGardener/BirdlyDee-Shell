@@ -11,8 +11,12 @@
 #define FOREVER '\0'
 #define DELIMS " \t\r\n"
 
-void checkEnv(char *args){
+extern char **environ;
+
+
+void checkEnv(char *args, char **envp){
     char *cmd;
+    int PAGER;
     /* get argument after printenv */
     cmd = strtok(args, " | ");
 
@@ -21,6 +25,16 @@ void checkEnv(char *args){
         cmd = strtok(NULL, " | ");
     }
     printf("\nOMGPAGERRR: %s", getenv("PAGER"));
+    /* Prints the user ENVIROMENT variable */
+    char** env;
+    if(strcmp(getenv("PAGER"), "less") ){
+        PAGER = 80;
+    }
+    for (env = envp; *env != 0; env++)
+    {
+        char* thisEnv = *env;
+        printf("%s\n", thisEnv);
+    }
 }
 
 void changedir(char *args){
@@ -45,7 +59,7 @@ void changedir(char *args){
 /*
 main måste alltid vara längst ner
 */
-int main(){
+int main(int argc,char** envp){
     pid_t pid;
     char inbuffer[MAX_INPUT];
     char pwd[PATH_WORKING_DIRECTORY];
@@ -90,9 +104,8 @@ int main(){
 
         if(instr[0] == 'p' && instr[1] == 'r' && instr[2] == 'i' && instr[3] == 'n'
             && instr[4] == 't' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
-            checkEnv(instr);
+            checkEnv(instr, environ);
         }
-
     }
         /* create new process*/
     }
