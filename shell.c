@@ -62,9 +62,9 @@ void newprocess (char inbuffer[]) {
 		printf("LOL");
 		pid = fork();
 		if(pid >= 0){
-			printf("Fork successfull!\n");
+			printf("Fork successfull! %u\n");
 			if(pid == 0) { //child process
-				printf("Child process\n");
+				printf("Child process, pid: %u\n", getpid());
 
 				char ** res; NULL;
 				char * p = strtok(inbuffer, " ");
@@ -86,7 +86,7 @@ void newprocess (char inbuffer[]) {
 				execvp(inbuffer, res);
 
 			} else { //parent process
-				printf("Parent Process\n");
+				printf("Parent Process, pid: %u\n", getpid());
 			}
 		}
 }
