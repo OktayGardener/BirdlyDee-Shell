@@ -1,4 +1,5 @@
 #include "cd.h"
+#include <errno.h>
 
 void changedir(char *args){
     char *cmd;
