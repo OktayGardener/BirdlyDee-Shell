@@ -66,7 +66,24 @@ void newprocess (char inbuffer[]) {
 			if(pid == 0) { //child process
 				printf("Child process\n");
 
-				execlp(inbuffer, inbuffer, NULL);
+				char ** res; NULL;
+				char * p = strtok(inbuffer, " ");
+				int n_spaces= 0, i;
+
+				while (p){
+					res = realloc (res, sizeof(char*) * ++n_spaces);
+					if (res == NULL)
+						exit(-1);
+
+					res[n_spaces-1] = p;
+
+					p = strtok (NULL, " ");
+				}
+				res = realloc (res, sizeof (char*) * ++n_spaces);
+				res[n_spaces] = NULL;
+				printf(res[1]);
+
+				execvp(inbuffer, res);
 
 			} else { //parent process
 				printf("Parent Process\n");
