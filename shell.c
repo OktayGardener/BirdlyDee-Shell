@@ -12,6 +12,7 @@
 #define DELIMS " \t\r\n"
 
 extern char **environ;
+pid_t pid;
 
 
 void changedir(char *args){
@@ -34,12 +35,13 @@ void changedir(char *args){
 }
 
 void newprocess(char inbuffer[]) {
-		pid_t pid;
-		printf("LOL");
+		
+		
 		pid = fork();
 		if(pid >= 0){
 			printf("Fork successfull! %u\n");
-			if(pid == 0) { //child process
+			if(pid == 0) { 
+				/* child process */
 				printf("Child process, pid: %u\n", getpid());
 
 				char ** res = NULL;
@@ -61,8 +63,20 @@ void newprocess(char inbuffer[]) {
 
 				execvp(inbuffer, res);
 
-			} else { //parent process
+			} else { 
+				/* parent process */
 				printf("Parent Process, pid: %u\n", getpid());
+				
+				if (pid == -1){
+					/* fork failed */
+					char * errormessage = "UNKNOWN"; /* felmeddelandetext */
+					if( EAGAIN == errno ) errormessage = "cannot allocate page table";
+					if( ENOMEM == errno ) errormessage = "cannot allocate kernel data";
+					fprintf( stderr, "fork() failed because: %s\n", errormessage );
+					exit( 1 );
+				} 
+					
+				
 			}
 		}
 }
@@ -122,7 +136,7 @@ int main(int argc,char** envp){
         instr = &inbuffer[stdinchar];
 
         /* strcmp(x,y) == 0 if the strings match */
-        if(strcmp(instr, "exit") == 0) break;
+        if(strcmp(instr, "exit") == 0) exit(0);
 
         if(instr[0] == 'c' && instr[1] == 'd'){
                 changedir(instr);
@@ -137,4 +151,5 @@ int main(int argc,char** envp){
 
     }
 }
+
 
