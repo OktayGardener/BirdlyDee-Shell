@@ -47,6 +47,7 @@ void changedir(char *args){
     }
     else if(strcmp(cmd, "~") == 0) {
         chdir(getenv("HOME"));
+        if (errno) perror("Command failed");
     } else {
         chdir(cmd);
         if (errno) perror("Command failed");
@@ -63,7 +64,7 @@ int main(int argc,char** envp){
     char pwd[PATH_WORKING_DIRECTORY];
     char *command;
     char *instr;
-    char** env = 0;
+    char **env = 0;
     int stdinchar = 0;
     errno = 0;
 
@@ -118,7 +119,6 @@ int main(int argc,char** envp){
 					}
 				}
 			}
-
     }
         /* create new process*/
     }
