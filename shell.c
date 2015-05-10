@@ -13,7 +13,6 @@
 
 extern char **environ;
 
-
 void checkEnv(char *args, char **envp, char **env){
     char *cmd;
     int PAGER;
@@ -64,7 +63,7 @@ int main(int argc,char** envp){
     char pwd[PATH_WORKING_DIRECTORY];
     char *command;
     char *instr;
-    char** env;
+    char** env = 0;
     int stdinchar = 0;
     errno = 0;
 
