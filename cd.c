@@ -8,12 +8,12 @@
 
 void changedir(char *args){
     char *cmd;
-    printf("%s\n", args);
     /* get argument after cd */
     cmd = strtok(args, "cd ");
-    printf("%s\n", cmd);
 
     if(cmd == NULL){
+        /* EINVAL: invalid argument (22) */
+        errno = 22;
         perror("Command failed");
     }
     else if(strcmp(cmd, "~") == 0) {
