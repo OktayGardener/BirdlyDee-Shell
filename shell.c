@@ -9,25 +9,42 @@
 #include "exit.h"
 #include "checkenv.h"
 
-
 /* Definitions */
 #define MAX_INPUT 80
 #define PATH_WORKING_DIRECTORY 80
 #define FOREVER '\0'
 #define DELIMS " \t\r\n"
 
-// void changedir(char *args){
-//     char *cmd;
-//     printf("%s\n", args);
-//     /* get argument after cd */
-//     cmd = strtok(args, "cd ");
-//     if(strcmp(cmd, "~") == 0) {
-//         chdir(getenv("HOME"));
-//     } else {
-//         chdir(cmd);
-//         if (errno) perror("Command failed");
-//     }
-// }
+void checkEnv(char *args){
+    char *cmd;
+    /* get argument after printenv */
+    cmd = strtok(args, " | ");
+
+    while(cmd != NULL){
+        printf("%s\n", cmd);
+        cmd = strtok(NULL, " | ");
+    }
+    printf("\nOMGPAGERRR: %s", getenv("PAGER"));
+}
+
+void changedir(char *args){
+    char *cmd;
+    /* get argument after cd */
+    cmd = strtok(args, "cd ");
+
+    if(cmd == NULL){
+        /* EINVAL: invalid argument (22) */
+        errno = 22;
+        perror("Command failed");
+    }
+    else if(strcmp(cmd, "~") == 0) {
+        chdir(getenv("HOME"));
+    } else {
+        chdir(cmd);
+        if (errno) perror("Command failed");
+    }
+}
+
 
 /*
 main måste alltid vara längst ner
