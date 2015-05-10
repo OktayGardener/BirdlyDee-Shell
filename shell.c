@@ -4,10 +4,6 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include "shell.h"
-#include "cd.h"
-#include "exit.h"
-#include "checkenv.h"
 
 /* Definitions */
 #define MAX_INPUT 80
