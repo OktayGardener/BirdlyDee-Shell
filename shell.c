@@ -5,6 +5,9 @@
 #include <errno.h>
 #include <unistd.h>
 #include "shell.h"
+#include "cd.h"
+#include "exit.h"
+
 
 /* Definitions */
 #define MAX_INPUT 80
@@ -12,18 +15,18 @@
 #define FOREVER '\0'
 #define DELIMS " \t\r\n"
 
-void changedir(char *args){
-    char *cmd;
-    printf("%s\n", args);
-    /* get argument after cd */
-    cmd = strtok(args, "cd ");
-    if(strcmp(cmd, "~") == 0) {
-        chdir(getenv("HOME"));
-    } else {
-        chdir(cmd);
-        if (errno) perror("Command failed");
-    }
-}
+// void changedir(char *args){
+//     char *cmd;
+//     printf("%s\n", args);
+//     /* get argument after cd */
+//     cmd = strtok(args, "cd ");
+//     if(strcmp(cmd, "~") == 0) {
+//         chdir(getenv("HOME"));
+//     } else {
+//         chdir(cmd);
+//         if (errno) perror("Command failed");
+//     }
+// }
 
 /*
 main måste alltid vara längst ner
@@ -78,6 +81,5 @@ int main(){
 
     }
         /* create new process*/
-
     }
 
