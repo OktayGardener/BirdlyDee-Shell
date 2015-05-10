@@ -86,12 +86,25 @@ int main(){
 
         if(instr[0] == 'c' && instr[1] == 'd'){
                 changedir(instr);
-            }
-
-        if(instr[0] == 'p' && instr[1] == 'r' && instr[2] == 'i' && instr[3] == 'n'
+        } else if(instr[0] == 'p' && instr[1] == 'r' && instr[2] == 'i' && instr[3] == 'n'
             && instr[4] == 't' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
             checkEnv(instr);
-        }
+        } else {
+			printf("LOL");
+			 pid = fork();
+				if(pid >= 0){
+					printf("Fork successfull!\n");
+					if(pid == 0) { //child process
+						printf("Child process\n");
+						
+						execlp(inbuffer, inbuffer, NULL);
+						
+						
+					} else { //parent process
+						printf("Parent Process\n");
+					}
+				}
+			}
 
     }
         /* create new process*/
