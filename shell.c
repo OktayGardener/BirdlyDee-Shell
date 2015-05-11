@@ -13,7 +13,6 @@
 
 extern char **environ;
 
-
 void changedir(char *args){
     char *cmd;
     /* get argument after cd */
@@ -43,8 +42,8 @@ void newprocess(char inbuffer[]) {
 				printf("Child process, pid: %u\n", getpid());
 
 				char ** res = NULL;
-				char * p = strtok(inbuffer, " ");
-				int n_spaces= 0, i;
+				char *p = strtok(inbuffer, " ");
+				int n_spaces = 0, i;
 
 				while (p){
 					res = realloc (res, sizeof(char*) * ++n_spaces);
@@ -53,7 +52,7 @@ void newprocess(char inbuffer[]) {
 
 					res[n_spaces-1] = p;
 
-					p = strtok (NULL, " ");
+					p = strtok(NULL, " ");
 				}
 				res = realloc (res, sizeof (char*) * ++n_spaces);
 				res[n_spaces] = NULL;
