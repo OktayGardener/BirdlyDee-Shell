@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <signal.h>
 
 /* Definitions */
 #define MAX_INPUT 80
@@ -12,6 +13,8 @@
 #define DELIMS " \t\r\n"
 
 pid_t pid;
+
+
 
 void changedir(char *args){
     char *cmd;
@@ -38,50 +41,56 @@ void processpipe(char inbuffer[]){
 
 }
 
+void kill_child(int child_pid){
+	kill(child_pid, SIGKILL);
+}
 
 void newprocess(char inbuffer[]) {
-		pid = fork();
-		if(pid >= 0){
-			printf("Fork successfull! %u\n");
-			if(pid == 0) {
-				/* child process */
-				printf("Child process, pid: %u\n", getpid());
+	
+	pid = fork();
+	if(pid >= 0){
+		printf("Fork successfull! %u\n");
+		if(pid == 0) {
+			/* child process */
+			printf("Child process, pid: %u\n", getpid());
+			char ** res = NULL;
+			char *p = strtok(inbuffer, " ");
+			int n_spaces = 0, i;
 
-				char ** res = NULL;
-				char *p = strtok(inbuffer, " ");
-				int n_spaces = 0, i;
+			while (p){
+				res = realloc (res, sizeof(char*) * ++n_spaces);
+				if (res == NULL)
+					exit(-1);
 
-				while (p){
-					res = realloc (res, sizeof(char*) * ++n_spaces);
-					if (res == NULL)
-						exit(-1);
+				res[n_spaces-1] = p;
 
-					res[n_spaces-1] = p;
-
-					p = strtok(NULL, " ");
-				}
-				res = realloc (res, sizeof (char*) * ++n_spaces);
-				res[n_spaces] = NULL;
-				printf(res[1]);
-
-				execvp(inbuffer, res);
-
-			} else {
-				/* parent process */
-				printf("Parent Process, pid: %u\n", getpid());
-
-				if (pid == -1){
-					/* fork failed */
-					char * errormessage = "UNKNOWN"; /* felmeddelandetext */
-					if( EAGAIN == errno ) errormessage = "cannot allocate page table";
-					if( ENOMEM == errno ) errormessage = "cannot allocate kernel data";
-					fprintf( stderr, "fork() failed because: %s\n", errormessage );
-					exit( 1 );
-				}
-
-
+				p = strtok(NULL, " ");
 			}
+			res = realloc (res, sizeof (char*) * ++n_spaces);
+			res[n_spaces] = NULL;
+			printf(res[1]);
+
+			execvp(inbuffer, res);
+			return;
+
+		} else {
+			/* parent process */
+			printf("Parent Process, pid: %u\n", getpid());
+
+			if (pid == -1){
+				/* fork failed */
+				char * errormessage = "UNKNOWN"; /* felmeddelandetext */
+				if( EAGAIN == errno ) errormessage = "cannot allocate page table";
+				if( ENOMEM == errno ) errormessage = "cannot allocate kernel data";
+				fprintf( stderr, "fork() failed because: %s\n", errormessage );
+				exit( 1 );
+			}
+			wait(1000);
+			printf("\nkilled: childpid: %i\n", pid);
+			kill_child(pid);
+			return;
 		}
+	}
 }
 
 void checkEnv(char args[]){
