@@ -16,10 +16,11 @@ pid_t pid;
 
 int check_pipe(char *s){
     int i;
+    int pipes = 0;
     for(i = 0; i < strlen(s); i++){
-        if(s[i] == '|') return i;
+        if(s[i] == '|') pipes++;
     }
-    return 0;
+    return pipes;
 }
 
 
@@ -36,10 +37,10 @@ int arg_count(char *s){
 }
 
 
-void create_process(char inbuff){
+void create_process(char *inbuff){
 
-    printf("\nNUM PIPES: %d", check_pipe(&inbuff));
-    printf("\nNUM ARGZ: %d\n", arg_count(&inbuff));
+    printf("\nNUM PIPES: %d", check_pipe(inbuff));
+    printf("\nNUM ARGZ: %d\n", arg_count(inbuff));
     // tokenize inbuffer to all commands
     // find pipes
     // create process etc
