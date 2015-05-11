@@ -14,6 +14,52 @@
 
 pid_t pid;
 
+int check_pipe(char *s){
+    int i;
+    for(i = 0; i < strlen(s); i++){
+        if(s[i] == '|') return i;
+    }
+    return 0;
+}
+
+
+int arg_count(char *s){
+    int i = 1;
+    int j = 0;
+
+    while(i < strlen(s)){
+        j++;
+        while((s[i] != ' ' || s[i - 1] == '\\') && i < strlen(s)) i++;
+        while(s[i] == ' ' && i < strlen(s)) i++;
+    }
+    return j;
+}
+
+
+void create_process(char inbuff){
+
+    printf("\nNUM PIPES: %d", check_pipe(&inbuff));
+    printf("\nNUM ARGZ: %d\n", arg_count(&inbuff));
+    // tokenize inbuffer to all commands
+    // find pipes
+    // create process etc
+
+    // int pfds[2];
+    // pipe(pfds);
+    // if (!fork()) {
+    // close(1);       /* close normal stdout */
+    // dup(pfds[1]);   /* make stdout same as pfds[1] */
+    // close(pfds[0]); /* we don't need this */
+    //     execlp("ls", "ls", NULL);
+    // } else {
+    // close(0);       /* close normal stdin */
+    // dup(pfds[0]);   /* make stdin same as pfds[0] */
+    // close(pfds[1]); /* we don't need this */
+    //     execlp("sort", "l", NULL);
+    // }
+    // return 0;
+
+}
 
 
 void changedir(char *args){
@@ -36,17 +82,13 @@ void changedir(char *args){
 }
 
 
-
-void processpipe(char inbuffer[]){
-
-}
-
 void kill_child(int child_pid){
 	kill(child_pid, SIGKILL);
 }
 
+
 void newprocess(char inbuffer[]) {
-	
+
 	pid = fork();
 	if(pid >= 0){
 		printf("Fork successfull! %u\n");
@@ -85,6 +127,7 @@ void newprocess(char inbuffer[]) {
 				fprintf( stderr, "fork() failed because: %s\n", errormessage );
 				exit( 1 );
 			}
+
 			wait(1000);
 			printf("\nkilled: childpid: %i\n", pid);
 			kill_child(pid);
@@ -147,21 +190,23 @@ int main(int argc,char** envp){
         /* Point at the adress where the char array of the input is */
         instr = &inbuffer[stdinchar];
 
+        create_process(inbuffer);
+
         /* strcmp(x,y) == 0 if the strings match */
         if(strcmp(instr, "exit") == 0) exit(0);
 
         if(instr[0] == 'c' && instr[1] == 'd'){
-                changedir(instr);
+            changedir(instr);
         } else if(instr[0] == 'p' && instr[1] == 'r' && instr[2] == 'i' && instr[3] == 'n'
             && instr[4] == 't' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
 
-        checkEnv(inbuffer);
+            checkEnv(inbuffer);
         } else {
         /* create new process*/
-    		newprocess(inbuffer);
-		}
+          newprocess(inbuffer);
+      }
 
-    }
+  }
 }
 
 
