@@ -11,7 +11,6 @@
 #define FOREVER '\0'
 #define DELIMS " \t\r\n"
 
-extern char **environ;
 pid_t pid;
 
 void changedir(char *args){
@@ -33,13 +32,18 @@ void changedir(char *args){
     }
 }
 
+
+
+void processpipe(char inbuffer[]){
+
+}
+
+
 void newprocess(char inbuffer[]) {
-		
-		
 		pid = fork();
 		if(pid >= 0){
 			printf("Fork successfull! %u\n");
-			if(pid == 0) { 
+			if(pid == 0) {
 				/* child process */
 				printf("Child process, pid: %u\n", getpid());
 
@@ -62,10 +66,10 @@ void newprocess(char inbuffer[]) {
 
 				execvp(inbuffer, res);
 
-			} else { 
+			} else {
 				/* parent process */
 				printf("Parent Process, pid: %u\n", getpid());
-				
+
 				if (pid == -1){
 					/* fork failed */
 					char * errormessage = "UNKNOWN"; /* felmeddelandetext */
@@ -73,9 +77,9 @@ void newprocess(char inbuffer[]) {
 					if( ENOMEM == errno ) errormessage = "cannot allocate kernel data";
 					fprintf( stderr, "fork() failed because: %s\n", errormessage );
 					exit( 1 );
-				} 
-					
-				
+				}
+
+
 			}
 		}
 }
