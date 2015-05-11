@@ -14,9 +14,8 @@
 
 pid_t pid;
 
-int check_pipe(char *s){
-    int i;
-    int pipes = 0;
+int count_pipes(char *s){
+    int i, pipes = 0;
     for(i = 0; i < strlen(s); i++){
         if(s[i] == '|') pipes++;
     }
@@ -24,10 +23,8 @@ int check_pipe(char *s){
 }
 
 
-int arg_count(char *s){
-    int i = 1;
-    int j = 0;
-
+int count_args(char *s){
+    int i = 1, j = 0;
     while(i < strlen(s)){
         j++;
         while((s[i] != ' ' || s[i - 1] == '\\') && i < strlen(s)) i++;
@@ -39,10 +36,12 @@ int arg_count(char *s){
 
 void create_process(char *inbuff){
 
-    printf("\nNUM PIPES: %d", check_pipe(inbuff));
-    printf("\nNUM ARGZ: %d\n", arg_count(inbuff));
+
     // tokenize inbuffer to all commands
     // find pipes
+
+    int pipes = count_pipes(inbuff);
+    int args = count_args(inbuff);
     // create process etc
 
     // int pfds[2];
