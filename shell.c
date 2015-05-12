@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <stdbool.h>
 
 /* Definitions */
@@ -206,7 +207,9 @@ void piper(char *command[]){
   	wait(&status);
   	wait(&status);
   	wait(&status);
-    
+    kill_child(pid_A);
+    kill_child(pid_B);
+    kill_child(pid_C);
   	
   	
 }
