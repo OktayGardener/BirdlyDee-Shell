@@ -44,12 +44,9 @@ char ** makecommands(char inbuffer[], int numpipes, char delim[]){
 
     while (p) {
         res = realloc (res, sizeof (char*) * ++n_spaces);
-
         if (res == NULL)
             exit (-1); /* memory allocation failed */
-
         res[n_spaces-1] = p;
-
         p = strtok (NULL, delim);
     }
 
@@ -89,9 +86,6 @@ void create_process(char inbuffer[]) {
         commands = makecommands(inbuffer, numpipes, "|");
         char **command1 = makecommands(commands[0], numpipes, " ");
         char **command2 = makecommands(commands[1], numpipes, " ");
-
-
-
 
         pipe(pfds);
         pid_t pid = fork();
@@ -176,18 +170,18 @@ void kill_child(pid_t child_pid){
 
     void checkEnv(char args[]){
         char *cmd;
-        int PAGER;
+        char *pager;
+        pager = getenv("PAGER");
+        /* pager = less if it's not set */
+        if(strcmp(pager, "") == 0) pager = "less";
         /* get argument after printenv */
-        cmd = strtok(args, " | ");
+        int numpipes = count_pipes(inbuffer);
+        cmd = makecommands(inbuffer, numpipes, " ");
 
         if(strcmp(cmd, "printenv") == 0) {
             create_process(args);
         }
 
-        while(cmd != NULL){
-            printf("%s\n", cmd);
-            cmd = strtok(NULL, " | ");
-        }
     }
 
     /*
