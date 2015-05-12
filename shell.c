@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/types.h>
 
 /* Definitions */
 #define MAX_INPUT 80
@@ -12,7 +13,7 @@
 #define FOREVER '\0'
 #define DELIMS " \t\r\n"
 
-pid_t pid;
+
 
 int count_pipes(char *s){
     int i, pipes = 0;
@@ -33,31 +34,69 @@ int count_args(char *s){
     return j;
 }
 
+char ** makecommands(char inbuffer[], int numpipes, char delim[]){
+    char ** res  = NULL;
+    char *  p    = strtok (inbuffer, delim);
+    int n_spaces = 0;
 
-void create_process(char *inbuff){
+
+/* split string and append tokens to 'res' */
+
+    while (p) {
+      res = realloc (res, sizeof (char*) * ++n_spaces);
+
+      if (res == NULL)
+    exit (-1); /* memory allocation failed */
+
+          res[n_spaces-1] = p;
+
+      p = strtok (NULL, delim);
+  }
+
+/* realloc one extra element for the last NULL */
+
+  res = realloc (res, sizeof (char*) * (n_spaces+1));
+  res[n_spaces] = 0;
+  return res;
+}
+
+void create_process(char inbuffer[]) {
+
+    /* 1 check num args*/
+    /* 2 split into num processes*/
+    /* 3 create processes*/
 
 
-    // tokenize inbuffer to all commands
-    // find pipes
+    int pfds[2];
+    int numpipes = count_pipes(inbuffer);
 
-    int pipes = count_pipes(inbuff);
-    int args = count_args(inbuff);
-    // create process etc
 
-    // int pfds[2];
-    // pipe(pfds);
-    // if (!fork()) {
-    // close(1);       /* close normal stdout */
-    // dup(pfds[1]);   /* make stdout same as pfds[1] */
-    // close(pfds[0]); /* we don't need this */
-    //     execlp("ls", "ls", NULL);
-    // } else {
-    // close(0);       /* close normal stdin */
-    // dup(pfds[0]);   /* make stdin same as pfds[0] */
-    // close(pfds[1]); /* we don't need this */
-    //     execlp("sort", "l", NULL);
-    // }
-    // return 0;
+    char **commands = makecommands(inbuffer, numpipes, "|");
+    printf("omg test one command: %s\n", commands[0]);
+    if(numpipes == 0){
+      execvp(commands[0], commands);
+    }
+    char **command1 = makecommands(commands[0], numpipes, " ");
+    char **command2 = makecommands(commands[1], numpipes, " ");
+    char *s = commands[0];
+    char *s2 = commands[1];
+
+
+
+
+    pipe(pfds);
+
+    if (!fork()) {
+        close(1);       /* close normal stdout */
+        dup(pfds[1]);   /* make stdout same as pfds[1] */
+        close(pfds[0]); /* we don't need this */
+        execvp(command1[0], command1);
+    } else {
+        close(0);       /* close normal stdin */
+        dup(pfds[0]);   /* make stdin same as pfds[0] */
+        close(pfds[1]); /* we don't need this */
+        execvp(command2[0], command2);
+    }
 
 }
 
@@ -82,80 +121,65 @@ void changedir(char *args){
 }
 
 
-void kill_child(int child_pid){
-	kill(child_pid, SIGKILL);
+void kill_child(pid_t child_pid){
+    kill(child_pid, SIGKILL);
 }
 
-char** makecommands(char inbuffer[]){
-	char ** res = NULL;
-	char *p = strtok(inbuffer, " ");
-	int n_spaces = 0, i;
-	while (p){
-		res = realloc (res, sizeof(char*) * ++n_spaces);
-		if (res == NULL)
-			exit(-1);
 
-		res[n_spaces-1] = p;
 
-		p = strtok(NULL, " ");
-	}
-	res = realloc (res, sizeof (char*) * ++n_spaces);
-	res[n_spaces] = NULL;
-	return res;
-}
 
-void newprocess(char inbuffer[]) {
+/*void newprocess(char inbuffer[]) {
 
-	pid = fork();
-	if(pid >= 0){
-		printf("Fork successfull! %u\n");
-		if(pid == 0) {
-			/* child process */
-			printf("Child process, pid: %u\n", getpid());
-			
+    pid = fork();
+    if(pid >= 0){
+        printf("Fork successfull! %u\n");
+        if(pid == 0) {
+            /* child process
+            printf("Child process, pid: %u\n", getpid());
 
-			
-			printf(res[1]);
 
-			execvp(inbuffer, res);
-			return;
 
-		} else {
-			/* parent process */
-			printf("Parent Process, pid: %u\n", getpid());
 
-			if (pid == -1){
-				/* fork failed */
-				char * errormessage = "UNKNOWN"; /* felmeddelandetext */
-				if( EAGAIN == errno ) errormessage = "cannot allocate page table";
-				if( ENOMEM == errno ) errormessage = "cannot allocate kernel data";
-				fprintf( stderr, "fork() failed because: %s\n", errormessage );
-				exit( 1 );
-			}
 
-			wait(1000);
-			printf("\nkilled: childpid: %i\n", pid);
-			kill_child(pid);
-			return;
-		}
-	}
-}
+            execvp(inbuffer, res);
+            return;
 
-void checkEnv(char args[]){
-    char *cmd;
-    int PAGER;
+        } else {
+            /* parent process
+            printf("Parent Process, pid: %u\n", getpid());
+
+            if (pid == -1){
+                /* fork failed
+                char * errormessage = "UNKNOWN"; /* felmeddelandetext
+                if( EAGAIN == errno ) errormessage = "cannot allocate page table";
+                if( ENOMEM == errno ) errormessage = "cannot allocate kernel data";
+                fprintf( stderr, "fork() failed because: %s\n", errormessage );
+                exit( 1 );
+            }
+
+            wait(1000);
+            printf("\nkilled: childpid: %i\n", pid);
+            kill_child(pid);
+            return;
+        }
+    }
+}*/
+
+    void checkEnv(char args[]){
+        char *cmd;
+        int PAGER;
     /* get argument after printenv */
-    cmd = strtok(args, " | ");
+        cmd = strtok(args, " | ");
 
-    if(strcmp(cmd, "printenv") == 0) {
-        newprocess(args);
-    }
+        if(strcmp(cmd, "printenv") == 0) {
+            create_process(args);
+        }
 
-    while(cmd != NULL){
-        printf("%s\n", cmd);
-        cmd = strtok(NULL, " | ");
+        while(cmd != NULL){
+            printf("%s\n", cmd);
+            cmd = strtok(NULL, " | ");
+        }
     }
-}
 
 /*
 main måste alltid vara längst ner
@@ -195,7 +219,7 @@ int main(int argc,char** envp){
         /* Point at the adress where the char array of the input is */
         instr = &inbuffer[stdinchar];
 
-        create_process(inbuffer);
+
 
         /* strcmp(x,y) == 0 if the strings match */
         if(strcmp(instr, "exit") == 0) exit(0);
@@ -208,10 +232,7 @@ int main(int argc,char** envp){
             checkEnv(inbuffer);
         } else {
         /* create new process*/
-          newprocess(inbuffer);
+          create_process(inbuffer);
       }
-
   }
 }
-
-
