@@ -135,7 +135,6 @@ void new_process(char inbuffer[], bool background) {
             if(!background){
                 printf("lol inte background, foreground\n");
                 waitpid(pid, &returnstatus, 0);
-                kill_child(pid);
             }
 
             if (returnstatus == 0){
@@ -146,72 +145,134 @@ void new_process(char inbuffer[], bool background) {
                 printf("Child terminated with errors\n");
             }
 
-            printf("\nkilled: childpid: %i\n", pid);
+
 
             return;
         }
     }
 }
 
-void piper(char *command[]){
-  	pid_t endID;
-  	printf("PIPEEEER\n");
-  	printf("command0: %s\n", command[0]);
-  	printf("command1: %s\n", command[1]);
-  	printf("command2: %s\n", command[2]);
+int piper(char *command[], char *grepargs[]){
+    errno = 0;
+    pid_t endID;
+    printf("PIPEEEER\n");
+    printf("command0: %s\n", command[0]);
+    printf("command1: %s\n", command[1]);
+    printf("command2: %s\n", command[2]);
+    bool argument = false;
 
-  	int pipe_A[2];
-  	int pipe_B[2];
-  	int status;
-  
-  	pipe(pipe_A);
-  	pipe(pipe_B);
-  
-  	pid_t pid_A, pid_B, pid_C;
-  
-  	printf("pipa0 %d pipa1 %d\n", pipe_A[READ], pipe_A[WRITE]);
-  	
-  	if ((pid_A = fork()) == 0){
-      	printf("PIDA\n");
-    	dup2(pipe_A[WRITE], WRITE);
-    	close(pipe_A[WRITE]);
-    	close(pipe_A[READ]);
-      	printf("pid_A:::\n");
-      	execlp(command[0], command[0], NULL);
-    } 
-  	if((pid_B = fork()) == 0) {
-      	printf("PIDB\n");
-        dup2(pipe_A[READ],READ); 
+  if(strcmp(command[3], "nothing") != 0){
+    	printf("command3: %s\n", command[3]);
+    	printf("ARGUMENT = TRUE\n");
+    	argument = true;
+  }
+
+    int pipe_A[2];
+    int pipe_B[2];
+    int pipe_C[2];
+    int status;
+
+    pipe(pipe_A);
+    pipe(pipe_B);
+
+    pid_t pid_1, pid_2, pid_3, pid_4;
+
+    if (argument){
+        printf("NÄMEN ETT FJÄRDE ARGUMENT\n");
+        pipe(pipe_C);
+    }
+
+    printf("pipa0 %d pipa1 %d\n", pipe_A[READ], pipe_A[WRITE]);
+
+    if ((pid_1 = fork()) == 0){
+        printf("PID_1\n");
+        dup2(pipe_A[WRITE], WRITE);
         close(pipe_A[WRITE]);
         close(pipe_A[READ]);
-      	dup2(pipe_B[WRITE], WRITE);
-      	close(pipe_B[WRITE]);
-      	close(pipe_B[READ]);
-        execlp(command[1], command[1], NULL);
-    } 
-    if((pid_C = fork()) == 0){
-		printf("PIDC\n");
-		close(pipe_A[WRITE]);
-		close(pipe_A[READ]);
-		dup2(pipe_B[READ], READ);
-		close(pipe_B[WRITE]);
-		close(pipe_B[READ]);
-		
-		execlp(command[2], command[2], NULL);
-	}
-  	
-  	close(pipe_A[WRITE]);
-  	close(pipe_A[READ]);
-  	close(pipe_B[WRITE]);
-  	close(pipe_B[READ]);
-  	wait(&status);
-  	wait(&status);
-  	wait(&status);
-    kill_child(pid_A);
-    kill_child(pid_B);
-    kill_child(pid_C);
-  	
-  	
+        printf("pid_1:::\n");
+        execlp(command[0], command[0], NULL); /*printenv*/
+        if(errno != 0) return -1;
+    }
+    /*if((pid_grep = fork()) == 0) {
+
+    } */
+    if((pid_2= fork()) == 0){
+        printf("PID2\n");
+        dup2(pipe_A[READ],READ);
+        close(pipe_A[WRITE]);
+        close(pipe_A[READ]);
+        dup2(pipe_B[WRITE], WRITE);
+        close(pipe_B[WRITE]);
+        close(pipe_B[READ]);         
+      
+      if(argument) {
+        /* grep .c */
+       	
+        	/* execlp(grep,		 grep, 			-c, NULL);*/
+        	execvp(command[1], grepargs); /*grep c*/
+      } else {
+      	/* sort */
+        	execlp(command[1], command[1], NULL); /*sort*/
+      }
+       if(errno != 0) return -1;
+    }
+
+  if((pid_3 = fork()) == 0){
+
+      printf("PID3\n");	
+      dup2(pipe_B[READ], READ);
+      close(pipe_A[WRITE]);
+      close(pipe_A[READ]);
+        
+      if (argument){
+        	dup2(pipe_C[WRITE], WRITE);  
+        	close(pipe_B[WRITE]);
+      		close(pipe_B[READ]);
+        	close(pipe_C[WRITE]);
+        	close(pipe_C[READ]);
+      } else {
+	
+      close(pipe_B[WRITE]);
+      close(pipe_B[READ]);
+      }
+    
+      execlp(command[2], command[2], NULL); /*pager */
+    
+      if(errno != 0) return -1;
+
+  }
+
+    if (argument){
+      
+        if ((pid_4 = fork()) == 0){
+          	 printf("PID4\n");
+          	
+          	dup2(pipe_C[READ], READ);
+          	close(pipe_A[WRITE]);
+          	close(pipe_A[READ]);
+            close(pipe_B[WRITE]);
+            close(pipe_B[READ]);
+            close(pipe_C[WRITE]);
+            close(pipe_C[READ]);
+          	execlp(command[3], command[3], NULL);			/*pager*/
+        }
+      
+    }
+    close(pipe_A[WRITE]);
+    close(pipe_A[READ]);
+    close(pipe_B[WRITE]);
+    close(pipe_B[READ]);
+    wait(&status);
+    wait(&status);
+    wait(&status);
+    
+  
+    if(argument){
+      	close(pipe_C[WRITE]);
+      	close(pipe_C[READ]);
+      	wait(&status);
+    }
+    return 0;
 }
 
 /*
@@ -228,24 +289,40 @@ Any errors in the execution of the pipeline should be handled in a nice manner
 void checkEnv(char args[]){
 /*     char *cmd; */
     char *pager;
-    pager = getenv("PAGER");
+    if(getenv("PAGER") == NULL) {
+        pager = "less";
+    } else {
+        pager = getenv("PAGER");
+    }
+    printf("%s\n", pager);
     /* pager = less if it's not set */
-    /*    if(strcmp(pager, "") == 0) pager = "less";*/
-    /* get argument after printenv */
-
     /* Case without arg */
   if(strcmp(args, "\0") == 0){
     /* checkenv         -> printenv | sort | pager*/
-    char *command[3];
+    char *command[4];
     command[0] = "printenv";
     command[1] = "sort";
-    command[2] = "less";
+    command[2] = pager;
+    command[3] = "nothing";
     printf("No argumentslol\n");
-	piper(command);
+    if(piper(command, "\0") == -1) {
+        command[2] = "more";
+        piper(command, "\0");
+    }
     
+
+
   } else {
     /* checkenv .c      -> printenv | grep .c | sort | pager*/
+    char *command[4];
+
+    char **c = makecommands(args, " ");
+    command[0] = "printenv";
+    command[1] = "grep";
+    command[2] = "sort";
+    command[3] = "less";
     printf("Argumeeents\n");
+    piper(command, c);
 
   }
 
@@ -276,7 +353,7 @@ int main(int argc,char** envp){
     char *instr;
     int stdinchar = 0;
     errno = 0;
-	signal(SIGINT, INThandler);
+    signal(SIGINT, INThandler);
     /* Shell info */
     printf("\n\nShell for KTH OS Course, using C.\n");
     printf("\nWelcome to BirdlyDee Shell! Remember: Dee's a bird!\n");
@@ -295,7 +372,7 @@ int main(int argc,char** envp){
             printf("\nFATAL ERROR: Could not read data from stdin.\n");
             break;
         }
-
+		
         /* Last character in the inbuffer is a nullpointer */
         inbuffer[strlen(inbuffer)-1] = '\0';
 
@@ -304,6 +381,11 @@ int main(int argc,char** envp){
         /* Point at the adress where the char array of the input is */
         instr = &inbuffer[stdinchar];
 
+      	/* carriage return */
+        if ((char) inbuffer[0] == 0) {
+            continue;
+            
+        }
         /* strcmp(x,y) == 0 if the strings match */
         if(strcmp(instr, "exit") == 0) exit(0);
 
@@ -320,18 +402,15 @@ int main(int argc,char** envp){
         } else {
             /* create new process*/
           if(count_pipes(inbuffer) == 0){
-              if(inbuffer[strlen(inbuffer)-1] == '&') {
+              if(inbuffer[strlen(inbuffer)-1] == '&') { /*background process*/
                   inbuffer[strlen(inbuffer)-1] = '\0';
                   new_process(inbuffer, true);
-              } else {
+              } else {			/*foreground process*/
                 new_process(inbuffer, false);
               }
           }
-          else {
-            continue;
-          }
+            
         }
-
     }
 }
-
+ 
