@@ -27,9 +27,9 @@ int count_pipes(char *s){
 int count_args(char *s){
     int i = 1, j = 0;
     while(i < strlen(s)){
-        j++;
-        while((s[i] != ' ' || s[i - 1] == '\\') && i < strlen(s)) i++;
-        while(s[i] == ' ' && i < strlen(s)) i++;
+    j++;
+    while((s[i] != ' ' || s[i - 1] == '\\') && i < strlen(s)) i++;
+    while(s[i] == ' ' && i < strlen(s)) i++;
     }
     return j;
 }
@@ -43,21 +43,21 @@ char ** makecommands(char inbuffer[], int numpipes, char delim[]){
 /* split string and append tokens to 'res' */
 
     while (p) {
-      res = realloc (res, sizeof (char*) * ++n_spaces);
+        res = realloc (res, sizeof (char*) * ++n_spaces);
 
-      if (res == NULL)
-    exit (-1); /* memory allocation failed */
+        if (res == NULL)
+            exit (-1); /* memory allocation failed */
 
-          res[n_spaces-1] = p;
+        res[n_spaces-1] = p;
 
-      p = strtok (NULL, delim);
-  }
+        p = strtok (NULL, delim);
+    }
 
 /* realloc one extra element for the last NULL */
 
-  res = realloc (res, sizeof (char*) * (n_spaces+1));
-  res[n_spaces] = 0;
-  return res;
+    res = realloc (res, sizeof (char*) * (n_spaces+1));
+    res[n_spaces] = 0;
+    return res;
 }
 
 void create_process(char inbuffer[]) {
@@ -71,31 +71,49 @@ void create_process(char inbuffer[]) {
     int numpipes = count_pipes(inbuffer);
 
 
-    char **commands = makecommands(inbuffer, numpipes, "|");
-    printf("omg test one command: %s\n", commands[0]);
+    char **commands;
+    printf("omg n.o. pipes: %i\n", numpipes);
     if(numpipes == 0){
-      execvp(commands[0], commands);
-    }
-    char **command1 = makecommands(commands[0], numpipes, " ");
-    char **command2 = makecommands(commands[1], numpipes, " ");
-    char *s = commands[0];
-    char *s2 = commands[1];
-
-
-
-
-    pipe(pfds);
-
-    if (!fork()) {
-        close(1);       /* close normal stdout */
-        dup(pfds[1]);   /* make stdout same as pfds[1] */
-        close(pfds[0]); /* we don't need this */
-        execvp(command1[0], command1);
+        commands = makecommands(inbuffer, numpipes, " ");
+        pid_t pid = fork();
+        if(pid == 0){
+            printf("Child process, pid: %u\n", getpid());
+            execvp(commands[0], commands);
+        } else {
+            printf("Parent Process, pid: %u\n", getpid());
+            wait(pid);
+            kill_child(pid);
+        }
     } else {
-        close(0);       /* close normal stdin */
-        dup(pfds[0]);   /* make stdin same as pfds[0] */
-        close(pfds[1]); /* we don't need this */
-        execvp(command2[0], command2);
+        printf("lol kom den hit asså\n");
+        commands = makecommands(inbuffer, numpipes, "|");
+        char **command1 = makecommands(commands[0], numpipes, " ");
+        char **command2 = makecommands(commands[1], numpipes, " ");
+
+
+
+
+        pipe(pfds);
+        pid_t pid = fork();
+        if (pid == 0) {
+            printf("Child process, pid: %u\n", getpid());
+            close(1);       /* close normal stdout */
+            dup(pfds[1]);   /* make stdout same as pfds[1] */
+            close(pfds[0]); /* we don't need this */
+            printf("LOOOOOOL SMÅBARN\n");
+            execvp(command1[0], command1);
+            printf("KOMMER VI HIT TRO2?\n");
+        } else {
+            printf("Parent Process, pid: %u\n", getpid());
+            close(0);       /* close normal stdin */
+            dup(pfds[0]);   /* make stdin same as pfds[0] */
+            close(pfds[1]); /* we don't need this */
+            printf("LOOOOOOL PARENT\n");
+            wait(pid);
+            execvp(command2[0], command2);
+            kill_child(pid);
+            printf("KOMMER VI HIT TRO2?\n");
+        }
     }
 
 }
@@ -129,25 +147,17 @@ void kill_child(pid_t child_pid){
 
 
 /*void newprocess(char inbuffer[]) {
-
     pid = fork();
     if(pid >= 0){
         printf("Fork successfull! %u\n");
         if(pid == 0) {
             /* child process
             printf("Child process, pid: %u\n", getpid());
-
-
-
-
-
             execvp(inbuffer, res);
             return;
-
         } else {
             /* parent process
             printf("Parent Process, pid: %u\n", getpid());
-
             if (pid == -1){
                 /* fork failed
                 char * errormessage = "UNKNOWN"; /* felmeddelandetext
@@ -156,7 +166,6 @@ void kill_child(pid_t child_pid){
                 fprintf( stderr, "fork() failed because: %s\n", errormessage );
                 exit( 1 );
             }
-
             wait(1000);
             printf("\nkilled: childpid: %i\n", pid);
             kill_child(pid);
@@ -168,7 +177,7 @@ void kill_child(pid_t child_pid){
     void checkEnv(char args[]){
         char *cmd;
         int PAGER;
-    /* get argument after printenv */
+        /* get argument after printenv */
         cmd = strtok(args, " | ");
 
         if(strcmp(cmd, "printenv") == 0) {
@@ -181,9 +190,9 @@ void kill_child(pid_t child_pid){
         }
     }
 
-/*
-main måste alltid vara längst ner
-*/
+    /*
+    main måste alltid vara längst ner
+    */
 int main(int argc,char** envp){
     char inbuffer[MAX_INPUT];
     char pwd[PATH_WORKING_DIRECTORY];
@@ -231,8 +240,10 @@ int main(int argc,char** envp){
 
             checkEnv(inbuffer);
         } else {
-        /* create new process*/
-          create_process(inbuffer);
-      }
-  }
+            /* create new process*/
+            create_process(inbuffer);
+        }
+
+    }
 }
+
