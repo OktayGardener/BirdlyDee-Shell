@@ -6,13 +6,15 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 /* Definitions */
 #define MAX_INPUT 80
 #define PATH_WORKING_DIRECTORY 80
 #define FOREVER '\0'
 #define DELIMS " \t\r\n"
-
+#define READ 0
+#define WRITE 1
 
 
 int count_pipes(char *s){
@@ -34,7 +36,7 @@ int count_args(char *s){
     return j;
 }
 
-char ** makecommands(char inbuffer[], int numpipes, char delim[]){
+char ** makecommands(char inbuffer[], char delim[]){
     char ** res  = NULL;
     char *  p    = strtok (inbuffer, delim);
     int n_spaces = 0;
@@ -57,132 +59,210 @@ char ** makecommands(char inbuffer[], int numpipes, char delim[]){
     return res;
 }
 
-void create_process(char inbuffer[]) {
-
-    /* 1 check num args*/
-    /* 2 split into num processes*/
-    /* 3 create processes*/
-
-
-    int pfds[2];
-    int numpipes = count_pipes(inbuffer);
-
-
-    char **commands;
-    printf("omg n.o. pipes: %i\n", numpipes);
-    if(numpipes == 0){
-        commands = makecommands(inbuffer, numpipes, " ");
-        pid_t pid = fork();
-        if(pid == 0){
-            printf("Child process, pid: %u\n", getpid());
-            execvp(commands[0], commands);
-        } else {
-            printf("Parent Process, pid: %u\n", getpid());
-            wait(pid);
-            kill_child(pid);
-        }
-    } else {
-        printf("lol kom den hit asså\n");
-        commands = makecommands(inbuffer, numpipes, "|");
-        char **command1 = makecommands(commands[0], numpipes, " ");
-        char **command2 = makecommands(commands[1], numpipes, " ");
-
-        pipe(pfds);
-        pid_t pid = fork();
-        if (pid == 0) {
-            printf("Child process, pid: %u\n", getpid());
-            close(1);       /* close normal stdout */
-            dup(pfds[1]);   /* make stdout same as pfds[1] */
-            close(pfds[0]); /* we don't need this */
-            printf("LOOOOOOL SMÅBARN\n");
-            execvp(command1[0], command1);
-            printf("KOMMER VI HIT TRO2?\n");
-        } else {
-            printf("Parent Process, pid: %u\n", getpid());
-            close(0);       /* close normal stdin */
-            dup(pfds[0]);   /* make stdin same as pfds[0] */
-            close(pfds[1]); /* we don't need this */
-            printf("LOOOOOOL PARENT\n");
-            wait(pid);
-            execvp(command2[0], command2);
-            kill_child(pid);
-            printf("KOMMER VI HIT TRO2?\n");
-        }
-    }
-
-}
-
-
-void changedir(char *args){
-    char *cmd;
-    /* get argument after cd */
-    cmd = strtok(args, "cd ");
-
-    if(cmd == NULL){
-        /* EINVAL: invalid argument (22) */
-        errno = 22;
-        perror("Command failed");
-    }
-    else if(strcmp(cmd, "~") == 0) {
-        chdir(getenv("HOME"));
-        if (errno) perror("Command failed");
-    } else {
-        chdir(cmd);
-        if (errno) perror("Command failed");
-    }
-}
-
 
 void kill_child(pid_t child_pid){
     kill(child_pid, SIGKILL);
 }
 
 
+void changedir(char *args){
+    char *cmd;
+    errno = 0;
+    /* get argument after cd */
+    cmd = strtok(args, "cd ");
+
+    if(cmd == NULL){
+        printf("%s", cmd);
+        /* EINVAL: invalid argument (22) */
+        errno = 22;
+        perror("Command failed");
+        errno = 0;
+    } else if(strcmp(cmd, "~") == 0) {
+        chdir(getenv("HOME"));
+        if (errno) perror("Command failed");
+        errno = 0;
+    } else {
+        chdir(cmd);
+        if (errno) perror("Command failed");
+        errno = 0;
+    }
+}
 
 
-/*void newprocess(char inbuffer[]) {
-    pid = fork();
+void new_process(char inbuffer[], bool background) {
+    pid_t pid = fork();
     if(pid >= 0){
-        printf("Fork successfull! %u\n");
+        printf("Fork successfull! %u\n", getpid());
         if(pid == 0) {
-            /* child process
+            /* child process */
+
+            char ** res;
+            char *p;
+            int n_spaces;
             printf("Child process, pid: %u\n", getpid());
+            res = NULL;
+            p = strtok(inbuffer, " ");
+            n_spaces = 0;
+
+            while (p){
+                res = realloc (res, sizeof(char*) * ++n_spaces);
+                if (res == NULL)
+                    exit(-1);
+
+                res[n_spaces-1] = p;
+
+                p = strtok(NULL, " ");
+            }
+            res = realloc (res, sizeof (char*) * ++n_spaces);
+            res[n_spaces] = NULL;
+
             execvp(inbuffer, res);
             return;
         } else {
-            /* parent process
+            /* parent process */
+            int returnstatus = 0;
             printf("Parent Process, pid: %u\n", getpid());
             if (pid == -1){
-                /* fork failed
-                char * errormessage = "UNKNOWN"; /* felmeddelandetext
+                /* fork failed */
+                char * errormessage = "UNKNOWN"; /* felmeddelandetext */
                 if( EAGAIN == errno ) errormessage = "cannot allocate page table";
                 if( ENOMEM == errno ) errormessage = "cannot allocate kernel data";
                 fprintf( stderr, "fork() failed because: %s\n", errormessage );
                 exit( 1 );
             }
-            wait(1000);
+
+            if(!background){
+                printf("lol inte background, foreground\n");
+                waitpid(pid, &returnstatus, 0);
+                kill_child(pid);
+            }
+
+            if (returnstatus == 0){
+                printf("Child terminated normally\n");
+            }
+
+            if (returnstatus == 1){
+                printf("Child terminated with errors\n");
+            }
+
             printf("\nkilled: childpid: %i\n", pid);
-            kill_child(pid);
+
             return;
         }
     }
-}*/
+}
 
-    void checkEnv(char args[]){
-        char *cmd;
-        char *pager;
-        pager = getenv("PAGER");
-        /* pager = less if it's not set */
-        if(strcmp(pager, "") == 0) pager = "less";
-        /* get argument after printenv */
-        int numpipes = count_pipes(inbuffer);
-        cmd = makecommands(inbuffer, numpipes, " ");
+void piper(char *command[]){
+  	pid_t endID;
+  	printf("PIPEEEER\n");
+  	printf("command0: %s\n", command[0]);
+  	printf("command1: %s\n", command[1]);
+  	printf("command2: %s\n", command[2]);
 
-        if(strcmp(cmd, "printenv") == 0) {
-            create_process(args);
-        }
+  	int pipe_A[2];
+  	int pipe_B[2];
+  	int status;
+  
+  	pipe(pipe_A);
+  	pipe(pipe_B);
+  
+  	pid_t pid_A, pid_B, pid_C;
+  
+  	printf("pipa0 %d pipa1 %d\n", pipe_A[READ], pipe_A[WRITE]);
+  	
+  	if ((pid_A = fork()) == 0){
+      	printf("PIDA\n");
+    	dup2(pipe_A[WRITE], WRITE);
+    	close(pipe_A[WRITE]);
+    	close(pipe_A[READ]);
+      	printf("pid_A:::\n");
+      	execlp(command[0], command[0], NULL);
+    } 
+  	if((pid_B = fork()) == 0) {
+      	printf("PIDB\n");
+        dup2(pipe_A[READ],READ); 
+        close(pipe_A[WRITE]);
+        close(pipe_A[READ]);
+      	dup2(pipe_B[WRITE], WRITE);
+      	close(pipe_B[WRITE]);
+      	close(pipe_B[READ]);
+        execlp(command[1], command[1], NULL);
+    } 
+    if((pid_C = fork()) == 0){
+		printf("PIDC\n");
+		close(pipe_A[WRITE]);
+		close(pipe_A[READ]);
+		dup2(pipe_B[READ], READ);
+		close(pipe_B[WRITE]);
+		close(pipe_B[READ]);
+		
+		execlp(command[2], command[2], NULL);
+	}
+  	
+  	close(pipe_A[WRITE]);
+  	close(pipe_A[READ]);
+  	close(pipe_B[WRITE]);
+  	close(pipe_B[READ]);
+  	wait(&status);
+  	wait(&status);
+  	wait(&status);
+    
+  	
+  	
+}
 
-    }
+/*
+which should execute "printenv | sort | pager" if no arguments are given to the command.
+If arguments are passed to the command then "printenv | grep <arguments> | sort | pager" should be executed.
+The pager executed should be selected primarily based on the value of the users "PAGER" environment variable.
+If no such variable is set then one should first try to execute "less" and if that fails "more".
+Any errors in the execution of the pipeline should be handled in a nice manner
+(i.e. similar to how your normal shell handles errors in the execution of a manually set up pipeline).
+*/
+
+/* checkenv         -> printenv | sort | pager*/
+/* checkenv .c      -> printenv | grep .c | sort | pager*/
+void checkEnv(char args[]){
+/*     char *cmd; */
+    char *pager;
+    pager = getenv("PAGER");
+    /* pager = less if it's not set */
+    /*    if(strcmp(pager, "") == 0) pager = "less";*/
+    /* get argument after printenv */
+
+    /* Case without arg */
+  if(strcmp(args, "\0") == 0){
+    /* checkenv         -> printenv | sort | pager*/
+    char *command[3];
+    command[0] = "printenv";
+    command[1] = "sort";
+    command[2] = "less";
+    printf("No argumentslol\n");
+	piper(command);
+    
+  } else {
+    /* checkenv .c      -> printenv | grep .c | sort | pager*/
+    printf("Argumeeents\n");
+
+  }
+
+}
+
+void  INThandler(int sig)
+{
+     char  c;
+
+     signal(sig, SIG_IGN);
+     printf("\nOUCH, did you hit Ctrl-C?\n"
+            "Do you really want to quit? [y/n] ");
+     c = getchar();
+     if (c == 'y' || c == 'Y')
+          exit(0);
+     else
+          signal(SIGINT, INThandler);
+     getchar(); /* Get new line character*/
+}
+
 
     /*
     main måste alltid vara längst ner
@@ -191,10 +271,9 @@ int main(int argc,char** envp){
     char inbuffer[MAX_INPUT];
     char pwd[PATH_WORKING_DIRECTORY];
     char *instr;
-    char **env = 0;
     int stdinchar = 0;
     errno = 0;
-
+	signal(SIGINT, INThandler);
     /* Shell info */
     printf("\n\nShell for KTH OS Course, using C.\n");
     printf("\nWelcome to BirdlyDee Shell! Remember: Dee's a bird!\n");
@@ -222,20 +301,32 @@ int main(int argc,char** envp){
         /* Point at the adress where the char array of the input is */
         instr = &inbuffer[stdinchar];
 
-
-
         /* strcmp(x,y) == 0 if the strings match */
         if(strcmp(instr, "exit") == 0) exit(0);
 
         if(instr[0] == 'c' && instr[1] == 'd'){
             changedir(instr);
-        } else if(instr[0] == 'p' && instr[1] == 'r' && instr[2] == 'i' && instr[3] == 'n'
-            && instr[4] == 't' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
+        } else if(instr[0] == 'c' && instr[1] == 'h' && instr[2] == 'e' && instr[3] == 'c'
+            && instr[4] == 'k' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
 
-            checkEnv(inbuffer);
+          if(strcmp(instr, "checkenv") == 0) {
+            checkEnv("\0");
+          } else {
+            checkEnv(instr);
+          }
         } else {
             /* create new process*/
-            create_process(inbuffer);
+          if(count_pipes(inbuffer) == 0){
+              if(inbuffer[strlen(inbuffer)-1] == '&') {
+                  inbuffer[strlen(inbuffer)-1] = '\0';
+                  new_process(inbuffer, true);
+              } else {
+                new_process(inbuffer, false);
+              }
+          }
+          else {
+            continue;
+          }
         }
 
     }
