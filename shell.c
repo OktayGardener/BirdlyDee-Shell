@@ -68,9 +68,11 @@ void kill_child(pid_t child_pid){
 
 void changedir(char *args){
     char *cmd;
+    int chdirsuccess;
     errno = 0;
     /* get argument after cd */
     cmd = strtok(args, "cd ");
+    
 
     if(cmd == NULL){
         printf("%s", cmd);
@@ -79,12 +81,12 @@ void changedir(char *args){
         perror("Command failed");
         errno = 0;
     } else if(strcmp(cmd, "~") == 0) {
-        chdir(getenv("HOME"));
-        if (errno) perror("Command failed");
+        chdirsuccess = chdir(getenv("HOME"));
+        if (errno || chdirsuccess == -1) perror("Command failed");
         errno = 0;
     } else {
-        chdir(cmd);
-        if (errno) perror("Command failed");
+        chdirsuccess = chdir(cmd);
+        if (errno || chdirsuccess == -1) perror("Command failed");
         errno = 0;
     }
 }
@@ -153,8 +155,13 @@ void new_process(char inbuffer[], bool background) {
 }
 
 int piper(char *command[], char *grepargs[]){
+	int pipe_A[2];
+    int pipe_B[2];
+    int pipe_C[2];
+    int status;
+    pid_t pid_1, pid_2, pid_3, pid_4;
     errno = 0;
-    pid_t endID;
+    
     printf("PIPEEEER\n");
     printf("command0: %s\n", command[0]);
     printf("command1: %s\n", command[1]);
@@ -167,15 +174,12 @@ int piper(char *command[], char *grepargs[]){
     	argument = true;
   }
 
-    int pipe_A[2];
-    int pipe_B[2];
-    int pipe_C[2];
-    int status;
+
 
     pipe(pipe_A);
     pipe(pipe_B);
 
-    pid_t pid_1, pid_2, pid_3, pid_4;
+    
 
     if (argument){
         printf("NÄMEN ETT FJÄRDE ARGUMENT\n");
@@ -300,14 +304,17 @@ void checkEnv(char args[]){
   if(strcmp(args, "\0") == 0){
     /* checkenv         -> printenv | sort | pager*/
     char *command[4];
+    char *c[1];
     command[0] = "printenv";
     command[1] = "sort";
     command[2] = pager;
     command[3] = "nothing";
     printf("No argumentslol\n");
-    if(piper(command, "\0") == -1) {
+    
+    c[0] = args;
+    if(piper(command, c) == -1) {
         command[2] = "more";
-        piper(command, "\0");
+        piper(command, c);
     }
 
 
