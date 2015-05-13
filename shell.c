@@ -72,7 +72,7 @@ void changedir(char *args){
     errno = 0;
     /* get argument after cd */
     cmd = strtok(args, "cd ");
-    
+
 
     if(cmd == NULL){
         printf("%s", cmd);
@@ -162,14 +162,15 @@ int piper(char *command[], char *grepargs[]){
     int pipereturnA;
     int pipereturnB;
     int pipereturnC;
+    bool argument = false;
     pid_t pid_1, pid_2, pid_3, pid_4;
     errno = 0;
-    
+
     printf("PIPEEEER\n");
     printf("command0: %s\n", command[0]);
     printf("command1: %s\n", command[1]);
     printf("command2: %s\n", command[2]);
-    bool argument = false;
+
 
   if(strcmp(command[3], "nothing") != 0){
     	printf("command3: %s\n", command[3]);
@@ -182,14 +183,14 @@ int piper(char *command[], char *grepargs[]){
     pipereturnA = pipe(pipe_A);
     pipereturnB = pipe(pipe_B);
 
-    
+
 
     if (argument){
         printf("NÄMEN ETT FJÄRDE ARGUMENT\n");
         pipereturnC = pipe(pipe_C);
         if (pipereturnC == -1) perror("Fail");
     }
-    if (pipereturnA == -1 || pipereturnB == -1) perror("Fail"); 
+    if (pipereturnA == -1 || pipereturnB == -1) perror("Fail");
 
     printf("pipa0 %d pipa1 %d\n", pipe_A[READ], pipe_A[WRITE]);
 
@@ -315,7 +316,7 @@ void checkEnv(char args[]){
     command[2] = pager;
     command[3] = "nothing";
     printf("No argumentslol\n");
-    
+
     c[0] = args;
     if(piper(command, c) == -1) {
         command[2] = "more";
