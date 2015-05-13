@@ -203,11 +203,11 @@ int piper(char *command[], char *grepargs[]){
         close(pipe_A[READ]);
         dup2(pipe_B[WRITE], WRITE);
         close(pipe_B[WRITE]);
-        close(pipe_B[READ]);         
-      
+        close(pipe_B[READ]);
+
       if(argument) {
         /* grep .c */
-       	
+
         	/* execlp(grep,		 grep, 			-c, NULL);*/
         	execvp(command[1], grepargs); /*grep c*/
       } else {
@@ -219,34 +219,34 @@ int piper(char *command[], char *grepargs[]){
 
   if((pid_3 = fork()) == 0){
 
-      printf("PID3\n");	
+      printf("PID3\n");
       dup2(pipe_B[READ], READ);
       close(pipe_A[WRITE]);
       close(pipe_A[READ]);
-        
+
       if (argument){
-        	dup2(pipe_C[WRITE], WRITE);  
+        	dup2(pipe_C[WRITE], WRITE);
         	close(pipe_B[WRITE]);
       		close(pipe_B[READ]);
         	close(pipe_C[WRITE]);
         	close(pipe_C[READ]);
       } else {
-	
+
       close(pipe_B[WRITE]);
       close(pipe_B[READ]);
       }
-    
+
       execlp(command[2], command[2], NULL); /*pager */
-    
+
       if(errno != 0) return -1;
 
   }
 
     if (argument){
-      
+
         if ((pid_4 = fork()) == 0){
           	 printf("PID4\n");
-          	
+
           	dup2(pipe_C[READ], READ);
           	close(pipe_A[WRITE]);
           	close(pipe_A[READ]);
@@ -256,7 +256,7 @@ int piper(char *command[], char *grepargs[]){
             close(pipe_C[READ]);
           	execlp(command[3], command[3], NULL);			/*pager*/
         }
-      
+
     }
     close(pipe_A[WRITE]);
     close(pipe_A[READ]);
@@ -265,8 +265,8 @@ int piper(char *command[], char *grepargs[]){
     wait(&status);
     wait(&status);
     wait(&status);
-    
-  
+
+
     if(argument){
       	close(pipe_C[WRITE]);
       	close(pipe_C[READ]);
@@ -309,7 +309,7 @@ void checkEnv(char args[]){
         command[2] = "more";
         piper(command, "\0");
     }
-    
+
 
 
   } else {
@@ -372,7 +372,7 @@ int main(int argc,char** envp){
             printf("\nFATAL ERROR: Could not read data from stdin.\n");
             break;
         }
-		
+
         /* Last character in the inbuffer is a nullpointer */
         inbuffer[strlen(inbuffer)-1] = '\0';
 
@@ -384,7 +384,7 @@ int main(int argc,char** envp){
       	/* carriage return */
         if ((char) inbuffer[0] == 0) {
             continue;
-            
+
         }
         /* strcmp(x,y) == 0 if the strings match */
         if(strcmp(instr, "exit") == 0) exit(0);
@@ -409,8 +409,8 @@ int main(int argc,char** envp){
                 new_process(inbuffer, false);
               }
           }
-            
+
         }
     }
 }
- 
+
