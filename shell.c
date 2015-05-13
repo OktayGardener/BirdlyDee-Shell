@@ -61,10 +61,10 @@ char ** makecommands(char inbuffer[], char delim[]){
 }
 
 
-void kill_child(pid_t child_pid){
+/*void kill_child(pid_t child_pid){
     kill(child_pid, SIGKILL);
 }
-
+*/
 
 void changedir(char *args){
     char *cmd;
@@ -159,6 +159,9 @@ int piper(char *command[], char *grepargs[]){
     int pipe_B[2];
     int pipe_C[2];
     int status;
+    int pipereturnA;
+    int pipereturnB;
+    int pipereturnC;
     pid_t pid_1, pid_2, pid_3, pid_4;
     errno = 0;
     
@@ -176,15 +179,17 @@ int piper(char *command[], char *grepargs[]){
 
 
 
-    pipe(pipe_A);
-    pipe(pipe_B);
+    pipereturnA = pipe(pipe_A);
+    pipereturnB = pipe(pipe_B);
 
     
 
     if (argument){
         printf("NÄMEN ETT FJÄRDE ARGUMENT\n");
-        pipe(pipe_C);
+        pipereturnC = pipe(pipe_C);
+        if (pipereturnC == -1) perror("Fail");
     }
+    if (pipereturnA == -1 || pipereturnB == -1) perror("Fail"); 
 
     printf("pipa0 %d pipa1 %d\n", pipe_A[READ], pipe_A[WRITE]);
 
