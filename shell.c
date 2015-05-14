@@ -177,7 +177,9 @@ void new_process(char inbuffer[], bool background) {
                 printf("Foreground process:\n");
                 printf("Child process took: %f s\n", seconds);
             } else {
-
+                if(SIGDET == 0){
+                waitpid(pid, &returnstatus, 0);
+                }
             }
 
             if (returnstatus == 0){
