@@ -118,9 +118,9 @@ void handle_sigchld(int sig) {
 
 /* Signal handling for killing a child */
 void  handle_sigint(int sig) {
-   signal(SIGINT, handle_sigint);
-   signal(SIGCHLD, SIG_IGN);
-   printf("such signal\n");
+ signal(SIGINT, handle_sigint);
+ signal(SIGCHLD, SIG_IGN);
+ printf("such signal\n");
 }
 
 /* Create a new process */
@@ -322,17 +322,17 @@ int piper(char *command[], char *grepargs[]){
 if (argument){
 
     if ((pid_4 = fork()) == 0){
-       printf("PID4\n");
+     printf("PID4\n");
 
-       dup2(pipe_C[READ], READ);
-       close(pipe_A[WRITE]);
-       close(pipe_A[READ]);
-       close(pipe_B[WRITE]);
-       close(pipe_B[READ]);
-       close(pipe_C[WRITE]);
-       close(pipe_C[READ]);
+     dup2(pipe_C[READ], READ);
+     close(pipe_A[WRITE]);
+     close(pipe_A[READ]);
+     close(pipe_B[WRITE]);
+     close(pipe_B[READ]);
+     close(pipe_C[WRITE]);
+     close(pipe_C[READ]);
             execlp(command[3], command[3], NULL);           /*pager*/
-   }
+ }
 }
 close(pipe_A[WRITE]);
 close(pipe_A[READ]);
@@ -406,74 +406,74 @@ void checkEnv(char args[]){
 
 }
 
-    int main(int argc,char** envp){
-        char inbuffer[MAX_INPUT];
+int main(int argc,char** envp){
+    char inbuffer[MAX_INPUT];
         /* Set the path */
-        char pwd[PATH_WORKING_DIRECTORY];
-        char *instr;
-        int stdinchar = 0;
-        errno = 0;
-        signal(SIGINT, handle_sigint);
+    char pwd[PATH_WORKING_DIRECTORY];
+    char *instr;
+    int stdinchar = 0;
+    errno = 0;
+    signal(SIGINT, handle_sigint);
         /* Shell info */
-        printf("\n\nShell for KTH OS Course, using C.\n");
-        printf("\nWelcome to BirdlyDee Shell! Remember: Dee's a bird!\n");
-        printf("Created by Oktay Bahceci and Simon Orresson\n\n");
+    printf("\n\nShell for KTH OS Course, using C.\n");
+    printf("\nWelcome to BirdlyDee Shell! Remember: Dee's a bird!\n");
+    printf("Created by Oktay Bahceci and Simon Orresson\n\n");
 
-        while(FOREVER != EOF){
+    while(FOREVER != EOF){
         /* Get the name of the current working directory, store it in pwd */
-            char *returngetcwd;
+        char *returngetcwd;
         returngetcwd = getcwd(pwd, MAX_INPUT); /* char* getcwd(char* buffer, size_t size ); */
 
-            if (returngetcwd == NULL) perror("Error");
+        if (returngetcwd == NULL) perror("Error");
         /* Print shell name and working directory */
-            printf("birdly_dee:%s$ ", pwd);
+        printf("birdly_dee:%s$ ", pwd);
         /* Read data from stdin, if we can't, stop the program */
-            if (!fgets(inbuffer, MAX_INPUT, stdin)){
+        if (!fgets(inbuffer, MAX_INPUT, stdin)){
             /*printf("\nFATAL ERROR: Could not read data from stdin.%d\n", errno);*/
-                continue;
-            }
+            continue;
+        }
 
         /* Last character in the inbuffer is a nullpointer */
-            inbuffer[strlen(inbuffer)-1] = '\0';
+        inbuffer[strlen(inbuffer)-1] = '\0';
 
         /* Retrieve number of characters of the input */
-            while(inbuffer[stdinchar] == ' ' && stdinchar < strlen(inbuffer)) stdinchar++;
+        while(inbuffer[stdinchar] == ' ' && stdinchar < strlen(inbuffer)) stdinchar++;
         /* Point at the adress where the char array of the input is */
-            instr = &inbuffer[stdinchar];
+        instr = &inbuffer[stdinchar];
 
         /* carriage return */
-            if ((char) inbuffer[0] == 0) {
-                continue;
+        if ((char) inbuffer[0] == 0) {
+            continue;
 
-            }
+        }
         /* strcmp(x,y) == 0 if the strings match */
-            if(strcmp(instr, "exit") == 0) {
-                exitshell();
-                printf("\nfrom main: shell KILLED!\n");
-            }
+        if(strcmp(instr, "exit") == 0) {
+            exitshell();
+            printf("\nfrom main: shell KILLED!\n");
+        }
 
-            if(instr[0] == 'c' && instr[1] == 'd'){
-                changedir(instr);
-            } else if(instr[0] == 'c' && instr[1] == 'h' && instr[2] == 'e' && instr[3] == 'c'
-                && instr[4] == 'k' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
+        if(instr[0] == 'c' && instr[1] == 'd'){
+            changedir(instr);
+        } else if(instr[0] == 'c' && instr[1] == 'h' && instr[2] == 'e' && instr[3] == 'c'
+            && instr[4] == 'k' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
 
-              if(strcmp(instr, "checkenv") == 0) {
-                checkEnv("\0");
-            } else {
-                checkEnv(instr);
-            }
+          if(strcmp(instr, "checkenv") == 0) {
+            checkEnv("\0");
         } else {
+            checkEnv(instr);
+        }
+    } else {
             /* create new process*/
-          if(count_pipes(inbuffer) == 0){
+      if(count_pipes(inbuffer) == 0){
               if(inbuffer[strlen(inbuffer)-1] == '&') { /*background process*/
-              inbuffer[strlen(inbuffer)-1] = '\0';
-              new_process(inbuffer, true);
+          inbuffer[strlen(inbuffer)-1] = '\0';
+          new_process(inbuffer, true);
               } else {          /*foreground process*/
-              new_process(inbuffer, false);
-          }
+          new_process(inbuffer, false);
       }
-
   }
+
+}
 }
 return 0;
 }
