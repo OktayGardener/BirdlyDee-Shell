@@ -20,6 +20,12 @@
 #define SIGDET 0
 
 
+void exitshell(){
+    kill(getppid(),SIGUSR1);
+    printf("Shell successfully killed.");
+}
+
+
 int count_pipes(char *s){
     int i, pipes = 0;
     for(i = 0; i < strlen(s); i++){
@@ -78,7 +84,6 @@ void changedir(char *args){
     /* get argument after cd */
     cmd = strtok(args, "cd ");
 
-
     if(cmd == NULL){
         printf("%s", cmd);
         /* EINVAL: invalid argument (22) */
@@ -108,7 +113,7 @@ void  handle_sigint(int sig)
 {
      signal(SIGINT, handle_sigint);
      signal(SIGCHLD, SIG_IGN);
-     printf("\n");
+     printf("such signal\n");
 
 }
 
@@ -120,9 +125,11 @@ void new_process(char inbuffer[], bool background) {
 
     pid_t pid;
     if(SIGDET == 1){
-    signal(SIGCHLD, handle_sigchld);
-    signal(SIGINT, handle_sigint);
+        signal(SIGCHLD, handle_sigchld);
+        signal(SIGINT, handle_sigint);
     }
+
+    signal(SIGUSR1, exitshell);
     pid = fork();
     start = clock();
 
@@ -387,8 +394,6 @@ void checkEnv(char args[]){
 }
 
 
-
-
     /*
     main måste alltid vara längst ner
     */
@@ -434,7 +439,10 @@ int main(int argc,char** envp){
 
         }
         /* strcmp(x,y) == 0 if the strings match */
-        if(strcmp(instr, "exit") == 0) exit(0);
+        if(strcmp(instr, "exit") == 0) {
+            exitshell();
+            printf("\nfrom main: shell KILLED!\n");
+        }
 
         if(instr[0] == 'c' && instr[1] == 'd'){
             changedir(instr);
