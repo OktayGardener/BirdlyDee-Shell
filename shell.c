@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <stdbool.h>
 
 /* Definitions */
@@ -16,6 +17,7 @@
 #define DELIMS " \t\r\n"
 #define READ 0
 #define WRITE 1
+#define SIGDET 1
 
 
 int count_pipes(char *s){
@@ -61,6 +63,8 @@ char ** makecommands(char inbuffer[], char delim[]){
 }
 
 
+
+
 /*void kill_child(pid_t child_pid){
     kill(child_pid, SIGKILL);
 }
@@ -69,6 +73,7 @@ char ** makecommands(char inbuffer[], char delim[]){
 void changedir(char *args){
     char *cmd;
     int chdirsuccess;
+
     errno = 0;
     /* get argument after cd */
     cmd = strtok(args, "cd ");
@@ -92,9 +97,38 @@ void changedir(char *args){
 }
 
 
+void handle_sigchld(int sig) {
+  while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {
+    printf("\nBackground process terminated\n");
+}
+
+}
+
+void  handle_sigint(int sig)
+{
+     signal(SIGINT, handle_sigint);
+     signal(SIGCHLD, SIG_IGN);
+     printf("\n");
+
+}
+
+
 void new_process(char inbuffer[], bool background) {
-    pid_t pid = fork();
+    clock_t start;
+    clock_t end;
+    float seconds;
+
+
+
+    pid_t pid;
+    signal(SIGCHLD, handle_sigchld);
+    signal(SIGINT, handle_sigint);
+    pid = fork();
+    start = clock();
+
     if(pid >= 0){
+        printf("\n----------------------------\n");
+        printf("PROCESS STATUS:\n");
         printf("Fork successfull! %u\n", getpid());
         if(pid == 0) {
             /* child process */
@@ -135,8 +169,13 @@ void new_process(char inbuffer[], bool background) {
             }
 
             if(!background){
-                printf("lol inte background, foreground\n");
                 waitpid(pid, &returnstatus, 0);
+                end = clock();
+                seconds = (float)(end - start) / CLOCKS_PER_SEC;
+                printf("Foreground process:\n");
+                printf("Child process took: %f s\n", seconds);
+            } else {
+
             }
 
             if (returnstatus == 0){
@@ -147,7 +186,7 @@ void new_process(char inbuffer[], bool background) {
                 printf("Child terminated with errors\n");
             }
 
-
+        printf("----------------------------\n\n");
 
             return;
         }
@@ -155,7 +194,7 @@ void new_process(char inbuffer[], bool background) {
 }
 
 int piper(char *command[], char *grepargs[]){
-	int pipe_A[2];
+    int pipe_A[2];
     int pipe_B[2];
     int pipe_C[2];
     int status;
@@ -173,17 +212,13 @@ int piper(char *command[], char *grepargs[]){
 
 
   if(strcmp(command[3], "nothing") != 0){
-    	printf("command3: %s\n", command[3]);
-    	printf("ARGUMENT = TRUE\n");
-    	argument = true;
+        printf("command3: %s\n", command[3]);
+        printf("ARGUMENT = TRUE\n");
+        argument = true;
   }
-
-
 
     pipereturnA = pipe(pipe_A);
     pipereturnB = pipe(pipe_B);
-
-
 
     if (argument){
         printf("NÄMEN ETT FJÄRDE ARGUMENT\n");
@@ -217,12 +252,11 @@ int piper(char *command[], char *grepargs[]){
 
       if(argument) {
         /* grep .c */
-
-        	/* execlp(grep,		 grep, 			-c, NULL);*/
-        	execvp(command[1], grepargs); /*grep c*/
+            /* execlp(grep,      grep,          -c, NULL);*/
+            execvp(command[1], grepargs); /*grep c*/
       } else {
-      	/* sort */
-        	execlp(command[1], command[1], NULL); /*sort*/
+        /* sort */
+            execlp(command[1], command[1], NULL); /*sort*/
       }
        if(errno != 0) return -1;
     }
@@ -235,11 +269,11 @@ int piper(char *command[], char *grepargs[]){
       close(pipe_A[READ]);
 
       if (argument){
-        	dup2(pipe_C[WRITE], WRITE);
-        	close(pipe_B[WRITE]);
-      		close(pipe_B[READ]);
-        	close(pipe_C[WRITE]);
-        	close(pipe_C[READ]);
+            dup2(pipe_C[WRITE], WRITE);
+            close(pipe_B[WRITE]);
+            close(pipe_B[READ]);
+            close(pipe_C[WRITE]);
+            close(pipe_C[READ]);
       } else {
 
       close(pipe_B[WRITE]);
@@ -255,16 +289,16 @@ int piper(char *command[], char *grepargs[]){
     if (argument){
 
         if ((pid_4 = fork()) == 0){
-          	 printf("PID4\n");
+             printf("PID4\n");
 
-          	dup2(pipe_C[READ], READ);
-          	close(pipe_A[WRITE]);
-          	close(pipe_A[READ]);
+            dup2(pipe_C[READ], READ);
+            close(pipe_A[WRITE]);
+            close(pipe_A[READ]);
             close(pipe_B[WRITE]);
             close(pipe_B[READ]);
             close(pipe_C[WRITE]);
             close(pipe_C[READ]);
-          	execlp(command[3], command[3], NULL);			/*pager*/
+            execlp(command[3], command[3], NULL);           /*pager*/
         }
 
     }
@@ -272,15 +306,22 @@ int piper(char *command[], char *grepargs[]){
     close(pipe_A[READ]);
     close(pipe_B[WRITE]);
     close(pipe_B[READ]);
-    wait(&status);
-    wait(&status);
-    wait(&status);
 
+    if(SIGDET == 0){
+      printf("\nPolling processes...\n");
+      wait(&status);
+      wait(&status);
+      wait(&status);
+    } else {
+      printf("\nDetecting processes with signals...\n");
+     /* SIGDET == 1 */
+    }
 
     if(argument){
-      	close(pipe_C[WRITE]);
-      	close(pipe_C[READ]);
-      	wait(&status);
+        close(pipe_C[WRITE]);
+        close(pipe_C[READ]);
+        if (SIGDET == 0)
+            wait(&status);
     }
     return 0;
 }
@@ -341,20 +382,7 @@ void checkEnv(char args[]){
 
 }
 
-void  INThandler(int sig)
-{
-     char  c;
 
-     signal(sig, SIG_IGN);
-     printf("\nOUCH, did you hit Ctrl-C?\n"
-            "Do you really want to quit? [y/n] ");
-     c = getchar();
-     if (c == 'y' || c == 'Y')
-          exit(0);
-     else
-          signal(SIGINT, INThandler);
-     getchar(); /* Get new line character*/
-}
 
 
     /*
@@ -366,24 +394,26 @@ int main(int argc,char** envp){
     char *instr;
     int stdinchar = 0;
     errno = 0;
-    signal(SIGINT, INThandler);
+    signal(SIGINT, handle_sigint);
     /* Shell info */
     printf("\n\nShell for KTH OS Course, using C.\n");
     printf("\nWelcome to BirdlyDee Shell! Remember: Dee's a bird!\n");
     printf("Created by Oktay Bahceci and Simon Orresson\n\n");
 
     /* Set the path */
-    setenv("PATH", "/bin:/usr/bin", 1);
 
     while(FOREVER != EOF){
         /* Get the name of the current working directory, store it in pwd */
-        getcwd(pwd, MAX_INPUT); /* char* getcwd(char* buffer, size_t size ); */
+        char *returngetcwd;
+        returngetcwd = getcwd(pwd, MAX_INPUT); /* char* getcwd(char* buffer, size_t size ); */
+
+        if (returngetcwd == NULL) perror("Error");
         /* Print shell name and working directory */
         printf("birdly_dee:%s$ ", pwd);
         /* Read data from stdin, if we can't, stop the program */
         if (!fgets(inbuffer, MAX_INPUT, stdin)){
-            printf("\nFATAL ERROR: Could not read data from stdin.\n");
-            break;
+            /*printf("\nFATAL ERROR: Could not read data from stdin.%d\n", errno);*/
+            continue;
         }
 
         /* Last character in the inbuffer is a nullpointer */
@@ -394,7 +424,7 @@ int main(int argc,char** envp){
         /* Point at the adress where the char array of the input is */
         instr = &inbuffer[stdinchar];
 
-      	/* carriage return */
+        /* carriage return */
         if ((char) inbuffer[0] == 0) {
             continue;
 
@@ -418,12 +448,12 @@ int main(int argc,char** envp){
               if(inbuffer[strlen(inbuffer)-1] == '&') { /*background process*/
                   inbuffer[strlen(inbuffer)-1] = '\0';
                   new_process(inbuffer, true);
-              } else {			/*foreground process*/
+              } else {          /*foreground process*/
                 new_process(inbuffer, false);
               }
           }
 
         }
     }
+    return 0;
 }
-
