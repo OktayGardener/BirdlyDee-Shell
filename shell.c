@@ -17,7 +17,7 @@
 #define DELIMS " \t\r\n"
 #define READ 0
 #define WRITE 1
-#define SIGDET 1
+#define SIGDET 0
 
 
 int count_pipes(char *s){
@@ -118,11 +118,11 @@ void new_process(char inbuffer[], bool background) {
     clock_t end;
     float seconds;
 
-
-
     pid_t pid;
+    if(SIGDET == 1){
     signal(SIGCHLD, handle_sigchld);
     signal(SIGINT, handle_sigint);
+    }
     pid = fork();
     start = clock();
 
@@ -169,7 +169,9 @@ void new_process(char inbuffer[], bool background) {
             }
 
             if(!background){
+                if(SIGDET == 0){
                 waitpid(pid, &returnstatus, 0);
+                }
                 end = clock();
                 seconds = (float)(end - start) / CLOCKS_PER_SEC;
                 printf("Foreground process:\n");
