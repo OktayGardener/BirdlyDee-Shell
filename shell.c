@@ -128,34 +128,46 @@ void changedir(char *args){
     }
 }
 
-/* Kill the child with a signal by waiting for it to complete */
 
 
 
+/*Handles all signals*/
 
 void handler(int signum, siginfo_t* info, void* vp) {
+	/* If ctrl+z is pressed, print nextline */
     if(signum == SIGTSTP) {
         printf("\n");
         return;
     }
+    /* If ctrl+c is pressed, print nextline */
     if(signum == SIGINT) {
         printf("\n");
         return;
     }
+    /* If child process is exited, wait for it */
     if(signum == SIGCHLD) {
         pid_t wpid;
         int status;
         wpid = waitpid(info->si_pid, &status, WCONTINUED|WNOHANG);
+        
+        /* If child process exited */
+        
         if(wpid > 0) {
+			
+			/* If it exited normally */
             if (WIFEXITED(status) || WIFSIGNALED(status)) {
                 printf("Process %d terminated.\n", wpid);
+                
+                /* If it was continued, wait for it */
             } else if (WIFCONTINUED(status)) {
                 wpid = waitpid(wpid, &status, WUNTRACED);
+                /* If it exited normally */
                 if (WIFEXITED(status) || WIFSIGNALED(status)) {
                     printf("Process %d terminated.\n", wpid);
                 } else if (WIFSTOPPED(status)) {
                     printf("Process %d stopped.\n", wpid);
                 }
+                /* If stopped by signal */
             } else if (WIFSTOPPED(status)) {
                 printf("Process %d stopped.\n", wpid);
             }
@@ -165,14 +177,17 @@ void handler(int signum, siginfo_t* info, void* vp) {
     return;
 }
 
+/* Register a signal handler */
+
 void register_sighandler(int signal_code, void (*handler)(int, siginfo_t*, void*)) {
    struct sigaction signal_parameters;
 
    signal_parameters.sa_sigaction = handler;
    sigemptyset(&signal_parameters.sa_mask);
    signal_parameters.sa_flags = SA_SIGINFO;
+   /* Error */
    if(sigaction(signal_code, &signal_parameters, (void *)0) == -1) {
-       perror("kjell");
+       perror("sigaction error");
    }
 }
 
@@ -186,10 +201,9 @@ void new_process(char inbuffer[], bool background) {
     
 
     
-    /* If the user wants signal handling with processes */
 
-    /* Bind signal for exiting the process */
-    signal(SIGUSR1, exitshell);
+
+    
     /* Fork a new process */
     pid = fork();
     /* Start taking the time */
@@ -415,7 +429,6 @@ void checkEnv(char args[]){
         command[1] = "sort";
         command[2] = pager;
         command[3] = "nothing";
-        printf("No argumentslol\n");
         
         c[0] = args;
         if(piper(command, c) == -1) {
@@ -431,7 +444,6 @@ void checkEnv(char args[]){
         command[1] = "grep";
         command[2] = "sort";
         command[3] = "less";
-        printf("Argumeeents\n");
         piper(command, c);
         
     }
@@ -477,7 +489,6 @@ int main(int argc,char** envp){
     char *instr;
     int stdinchar = 0;
     errno = 0;
-    /*signal(SIGINT, handle_sigint);*/
     /* Shell info */
     printf("\n\nShell for KTH OS Course, using C.\n");
     printf("\nWelcome to BirdlyDee Shell! Remember: Dee's a bird!\n");
