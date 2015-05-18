@@ -18,7 +18,7 @@
 #define DELIMS " \t\r\n"
 #define READ 0
 #define WRITE 1
-#define SIGDET 0
+#define SIGDET 1
 
 
 /* Function for counting the number of pipes */
@@ -70,8 +70,26 @@ char ** makecommands(char inbuffer[], char delim[]){
 void exitshell(){
     /* Get the parent process id and kill it,
     killing the children in the process */
-    exit(1);
-    printf("Shell successfully killed.");
+    pid_t pid;
+    int status;
+    signal(SIGQUIT, SIG_IGN);
+    kill(-getpid(), SIGQUIT);
+    pid = -1;
+    
+    
+    while(1){
+		pid = waitpid(-1, &status, WNOHANG);
+		if(pid > 1) {
+			if (WIFEXITED(status) || WIFSIGNALED(status)) {
+                    printf("Process %d terminated.\n", pid);
+			}
+        } else {
+			break;
+        }
+	}
+			
+    printf("\n");
+    exit(0);
 }
 
 
