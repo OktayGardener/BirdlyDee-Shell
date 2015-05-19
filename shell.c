@@ -474,13 +474,17 @@ int main(int argc,char** envp){
         if(strcmp(instr, "exit") == 0) {
             exitshell();
         }
+        /* If the the first two characters are c and d -> cd */
         if(instr[0] == 'c' && instr[1] == 'd'){
+            /*  call to the changedir function  */
             changedir(instr);
+        /* If the first characters matches checkenv */
         } else if(instr[0] == 'c' && instr[1] == 'h' && instr[2] == 'e' && instr[3] == 'c'
         && instr[4] == 'k' && instr[5] == 'e' && instr[6] == 'n' && instr[7] == 'v') {
-
+          /* if checkenv don't have any arguments */
             if(strcmp(instr, "checkenv") == 0) {
                 checkEnv("\0");
+              /* checkenv with arguemnts */
             } else {
                 checkEnv(instr);
             }
@@ -497,7 +501,6 @@ int main(int argc,char** envp){
                     /* time measuring */
                     struct timeval  tv1, tv2;
                     gettimeofday(&tv1, NULL);
-
                     new_process(inbuffer, false);
                     gettimeofday(&tv2, NULL);
                     printf ("Total time = %f seconds\n",
