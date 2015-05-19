@@ -351,7 +351,11 @@ int piper(char *command[], char *grepargs[]){
 "printenv | grep <arguments> | sort | pager" command */
 void checkEnv(char args[]){
     /*  char *cmd; */
+    
+	
     char *pager;
+    /* Ignore SIGINT in checkenv */	
+    signal(SIGINT, SIG_IGN);
     if(getenv("PAGER") == NULL) {
         pager = "less";
     } else {
@@ -384,6 +388,8 @@ void checkEnv(char args[]){
         command[3] = "less";
         piper(command, c);
     }
+    /* Enable SIGINT again */
+    register_sighandler(SIGINT, handler);	
 }
 
 /* POLLING */
