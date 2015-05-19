@@ -327,7 +327,7 @@ int piper(char *command[], char *grepargs[]){
             perror("exec4 failed"); /* only if exec fails */
         }
       /* Error handling */
-    }  else if (pid_4 < 0){
+    }  else if (pid_4 < 0 && argument){
         perror("fork4");
         errorhandler();
     }
