@@ -8,8 +8,9 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
+#include <sys/time.h>
 #include <stdbool.h>
+
 
 /* Definitions */
 #define MAX_INPUT 80
@@ -31,17 +32,6 @@ int count_pipes(char *s){
     return pipes;
 }
 
-/* Function for counting the number of arguments in a command */
-int count_args(char *s){
-    int i = 1, j = 0;
-    /* Iterate over the whole string of chars */
-    while(i < strlen(s)){
-        j++;
-        while((s[i] != ' ' || s[i - 1] == '\\') && i < strlen(s)) i++;
-        while(s[i] == ' ' && i < strlen(s)) i++;
-    }
-    return j;
-}
 
 /*  Split the input into list in list with seperated commands */
 char ** makecommands(char inbuffer[], char delim[]){
@@ -75,20 +65,21 @@ void exitshell(){
     signal(SIGQUIT, SIG_IGN);
     kill(-getpid(), SIGQUIT);
     pid = -1;
-    
-    
+    printf("Thank you, ");
+    sleep(1); /* Wait for everything to shutdown. */
+    printf("come again!\n");
     while(1){
 		pid = waitpid(-1, &status, WNOHANG);
 		if(pid > 1) {
 			if (WIFEXITED(status) || WIFSIGNALED(status)) {
-                    printf("Process %d terminated.\n", pid);
+                    printf("\nProcess %d terminated.\n", pid);
 			}
         } else {
 			break;
         }
 	}
 			
-    printf("\n");
+    
     exit(0);
 }
 
@@ -156,20 +147,20 @@ void handler(int signum, siginfo_t* info, void* vp) {
 			
 			/* If it exited normally */
             if (WIFEXITED(status) || WIFSIGNALED(status)) {
-                printf("Process %d terminated.\n", wpid);
+                printf("\nProcess %d terminated.\n", wpid);
                 
                 /* If it was continued, wait for it */
             } else if (WIFCONTINUED(status)) {
                 wpid = waitpid(wpid, &status, WUNTRACED);
                 /* If it exited normally */
                 if (WIFEXITED(status) || WIFSIGNALED(status)) {
-                    printf("Process %d terminated.\n", wpid);
+                    printf("\nProcess %d terminated.\n", wpid);
                 } else if (WIFSTOPPED(status)) {
-                    printf("Process %d stopped.\n", wpid);
+                    printf("\nProcess %d stopped.\n", wpid);
                 }
                 /* If stopped by signal */
             } else if (WIFSTOPPED(status)) {
-                printf("Process %d stopped.\n", wpid);
+                printf("\nProcess %d stopped.\n", wpid);
             }
         }
         return;
@@ -191,75 +182,66 @@ void register_sighandler(int signal_code, void (*handler)(int, siginfo_t*, void*
    }
 }
 
+void errorhandler(){
+	char * errormessage = "UNKNOWN";
+	if( EAGAIN == errno ) errormessage = "cannot allocate page table";
+	if( ENOMEM == errno ) errormessage = "cannot allocate kernel data";
+	fprintf( stderr, "fork() failed because: %s\n", errormessage );
+	/* Force quit the shell */
+	exitshell();
+}
+
 /* Create a new process */
 void new_process(char inbuffer[], bool background) {
     /* Local system variables */
-    clock_t start;
-    clock_t end;
+    
     pid_t pid;
-    float seconds;
-    
 
-    
-
-
-    
     /* Fork a new process */
     pid = fork();
     /* Start taking the time */
-    start = clock();
+   
     
     if(pid >= 0){
         /* Process information */
-        printf("\n----------------------------\n");
+        /*printf("\n----------------------------\n");
         printf("PROCESS STATUS:\n");
-        printf("Fork successfull! %u\n", getpid());
+        printf("Fork successfull! %u\n", getpid());*/
         /* Child process */
         if(pid == 0) {
-            char ** res;
-            res = makecommands(inbuffer, " ");
- 
+			char ** res;
+			if(background){
+				setpgid(0, 0);
+			}
             
-            execvp(inbuffer, res);
-            return;
+            res = makecommands(inbuffer, " ");         
+            execvp(inbuffer, res);     
+            perror("exec failed");     
+            exit(1);
             /* Parent process */
         } else {
-			
+		
             int returnstatus = 0;
-            printf("Parent Process, pid: %u\n", getpid());
+            /*printf("Parent Process, pid: %u\n", getpid());*/
             if (pid == -1){
                 /* Fork failed, error messages */
-                char * errormessage = "UNKNOWN";
-                if( EAGAIN == errno ) errormessage = "cannot allocate page table";
-                if( ENOMEM == errno ) errormessage = "cannot allocate kernel data";
-                fprintf( stderr, "fork() failed because: %s\n", errormessage );
-                /* Force quit the shell */
-                exit( 1 );
+                errorhandler();
             }
             
             /* Foreground process */
-            if(!background){
-				
+            if(!background){			
 				waitpid(pid, &returnstatus, WUNTRACED);
-					
-				
-                
-                end = clock();
-                seconds = (float)(end - start) / CLOCKS_PER_SEC;
-                printf("Foreground process:\n");
-                printf("Child process took: %f s\n", seconds);
-            } else {
-			}
+            }
 
 			
-            if (returnstatus == 0){
+            /*if (returnstatus == 0){
                 printf("Child terminated normally\n");
             }
             if (returnstatus == 1){
                 printf("Child terminated with errors\n");
-            }
+            }*/
             
-            printf("----------------------------\n\n");
+            /*printf("----------------------------\n\n");*/
         }
     }
 }
@@ -276,19 +258,13 @@ int piper(char *command[], char *grepargs[]){
     int pipereturnC;
     bool argument = false;
     /* Processes */
-    pid_t pid_1, pid_2, pid_3, pid_4;
+    pid_t pid_1, pid_2, pid_3, pid_4, wpid;
     errno = 0;
     
     /* Print info */
-    printf("Creating pipe-processes..\n");
-    printf("command0: %s\n", command[0]);
-    printf("command1: %s\n", command[1]);
-    printf("command2: %s\n", command[2]);
     
     /* If grep has arguments, set the bool accordingly */
     if(strcmp(command[3], "nothing") != 0){
-        printf("command3: %s\n", command[3]);
-        printf("ARGUMENT = TRUE\n");
         argument = true;
     }
     
@@ -298,35 +274,31 @@ int piper(char *command[], char *grepargs[]){
     
     /* If grep <arguments> */
     if (argument){
-        printf("NÄMEN ETT FJÄRDE ARGUMENT\n");
         pipereturnC = pipe(pipe_C);
-        if (pipereturnC == -1) perror("Fail");
+        if (pipereturnC == -1) perror("Fail when creating pipes");
     }
     /* Pipe error handling */
-    if (pipereturnA == -1 || pipereturnB == -1) perror("Fail");
+    if (pipereturnA == -1 || pipereturnB == -1) perror("Fail when creating pipes");
     
-    /* Info */
-    printf("pipa0 %d pipa1 %d\n", pipe_A[READ], pipe_A[WRITE]);
+   
     
     /* Forking first process */
     if ((pid_1 = fork()) == 0){
-        printf("PID_1\n");
         /* Copy the write fd from pipe_A */
         dup2(pipe_A[WRITE], WRITE);
         /* Close the read/write fd for pipe_A */
         close(pipe_A[WRITE]);
         close(pipe_A[READ]);
-        printf("pid_1:::\n");
         /* Execute first command */
         execlp(command[0], command[0], NULL); /*printenv*/
-        /* Error handling */
-        if(errno != 0) return -1;
-    }
-    /*if((pid_grep = fork()) == 0) {
-    
-    } */
+        perror("exec1 failed"); /* only if exec fails */
+        
+    } else if (pid_1 < 0){
+		perror("fork1");
+		errorhandler();
+	}
+ 
     if((pid_2= fork()) == 0){
-        printf("PID2\n");
         dup2(pipe_A[READ],READ);
         close(pipe_A[WRITE]);
         close(pipe_A[READ]);
@@ -337,18 +309,20 @@ int piper(char *command[], char *grepargs[]){
         /* If grep <argument> */
         if(argument) {
             /* Example: grep .c */
-            /* execlp(grep,      grep,          -c, NULL);*/
+            /* execlp(grep,      [grep,          -c, NULL]);*/
             execvp(command[1], grepargs); /*grep c*/
         } else {
             execlp(command[1], command[1], NULL);
         }
-        /* Error handling */
-        if(errno != 0) return -1;
-    }
+        perror("exec2 failed"); /* only if exec fails */
+    } else if (pid_2 < 0){
+		perror("fork2");
+		errorhandler();
+	}
     
+    /* Third process */
     if((pid_3 = fork()) == 0){
         
-        printf("PID3\n");
         dup2(pipe_B[READ], READ);
         close(pipe_A[WRITE]);
         close(pipe_A[READ]);
@@ -366,15 +340,16 @@ int piper(char *command[], char *grepargs[]){
         }
         
         execlp(command[2], command[2], NULL); /*pager */
+        perror("exec3 failed"); /* only if exec fails */
         
-        if(errno != 0) return -1;
-        
-    }
-    
+    } else if (pid_3 < 0){
+		perror("fork3");
+		errorhandler();
+	}
+    /* If we perform grep, there will be a fourth process */
     if (argument){
         
         if ((pid_4 = fork()) == 0){
-            printf("PID4\n");
             
             dup2(pipe_C[READ], READ);
             close(pipe_A[WRITE]);
@@ -384,23 +359,29 @@ int piper(char *command[], char *grepargs[]){
             close(pipe_C[WRITE]);
             close(pipe_C[READ]);
             execlp(command[3], command[3], NULL);           /*pager*/
+            perror("exec4 failed"); /* only if exec fails */
         }
-    }
+    }  else if (pid_3 < 0){
+		perror("fork4");
+		errorhandler();
+	}
     close(pipe_A[WRITE]);
     close(pipe_A[READ]);
     close(pipe_B[WRITE]);
     close(pipe_B[READ]);
     
-    /* Polling */
+
     
     
     if(argument){
         close(pipe_C[WRITE]);
         close(pipe_C[READ]);
-        if (SIGDET == 0)
-            wait(&status);
+        
+
     }
-    return 0;
+    /* Wait for all processes to finish */
+	while ((wpid = wait(&status)) > 0);
+	return 0;
 }
 
 
@@ -418,7 +399,6 @@ void checkEnv(char args[]){
     } else {
         pager = getenv("PAGER");
     }
-    printf("%s\n", pager);
     /* pager = less if it's not set */
     /* Case without arg */
     if(strcmp(args, "\0") == 0){
@@ -455,16 +435,22 @@ void polling(){
 	
 	pid_t wpid;
 	int status;
+	/* Wait for all children */
 	wpid = waitpid((pid_t)-1, &status, WNOHANG|WCONTINUED);
 	printf("Polling processes..\n");
+	/* If childprocess is finished */
     if(wpid > 0) {
 		
+		/* If childprocess was terminated normally, or by signal*/
         if (WIFEXITED(status) || WIFSIGNALED(status)) {
             printf("Process %d terminated.\n", wpid);
+            /* If childprocess was stopped */
         } else if (WIFSTOPPED(status)) {
-            printf("Process %d terminated.\n", wpid);
+            printf("Process %d stopped.\n", wpid);
+            /* If it was continued */
         } else if (WIFCONTINUED(status)) {
             while(1) {
+				/* Wait for any child processes that were stopped */
                 wpid = waitpid(wpid, &status, WUNTRACED);
                 if(wpid > 0) {
                     if (WIFEXITED(status) || WIFSIGNALED(status)) {
@@ -508,6 +494,7 @@ int main(int argc,char** envp){
         
         if (returngetcwd == NULL) perror("Error");
         /* Print shell name and working directory */
+        sleep(0.4);
         printf("birdly_dee:%s$ ", pwd);
         /* Read data from stdin, if we can't, stop the program */
         if (!fgets(inbuffer, MAX_INPUT, stdin)){
@@ -534,7 +521,6 @@ int main(int argc,char** envp){
         /* strcmp(x,y) == 0 if the strings match */
         if(strcmp(instr, "exit") == 0) {
             exitshell();
-            printf("\nfrom main: shell KILLED!\n");
         }
         
 
@@ -555,8 +541,18 @@ int main(int argc,char** envp){
                 if(inbuffer[strlen(inbuffer)-1] == '&') { /*background process*/
                     inbuffer[strlen(inbuffer)-1] = '\0';
                     new_process(inbuffer, true);
+                    sleep(1);
                 } else {          /*foreground process*/
+					
+					/* time measuring */
+					struct timeval  tv1, tv2;
+					gettimeofday(&tv1, NULL);
+					
                     new_process(inbuffer, false);
+                    gettimeofday(&tv2, NULL);
+                    printf ("Total time = %f seconds\n",
+					(double) (tv2.tv_usec - tv1.tv_usec) / 1000000 +
+					(double) (tv2.tv_sec - tv1.tv_sec));
                 }
             }
             
