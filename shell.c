@@ -54,7 +54,7 @@ char ** makecommands(char inbuffer[], char delim[]){
     return res;
 }
 
-// ERROR HANDLING
+/* ERROR HANDLING */
 /* Exit-function, bound to signal for all processes */
 void exitshell(){
     /* Get the parent process id and kill it,
@@ -492,7 +492,7 @@ int main(int argc,char** envp){
 
         if (returngetcwd == NULL) perror("Error");
         /* Print shell name and working directory */
-        sleep(0.4);
+        sleep(1);
         printf("birdly_dee:%s$ ", pwd);
         /* Read data from stdin, if we can't, stop the program */
         if (!fgets(inbuffer, MAX_INPUT, stdin)){
