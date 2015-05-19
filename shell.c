@@ -13,7 +13,7 @@
 
 
 /* Definitions */
-#define MAX_INPUT 80
+#define MAX_INPUT 81
 #define PATH_WORKING_DIRECTORY 80
 #define FOREVER '\0'
 #define DELIMS " \t\r\n"
