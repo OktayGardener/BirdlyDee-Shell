@@ -12,7 +12,7 @@
 #include <stdbool.h>
 
 /* Definitions */
-#define MAX_INPUT 81
+#define MAX_INPUT 80
 #define PATH_WORKING_DIRECTORY 80
 #define FOREVER '\0'
 #define DELIMS " \t\r\n"
@@ -208,10 +208,6 @@ void new_process(char inbuffer[], bool background) {
         /* Child process */
         if(pid == 0) {
 			char ** res;
-			if(background){
-				setpgid(0, 0);
-			}
-
             res = makecommands(inbuffer, " ");
             execvp(inbuffer, res);
             perror("exec failed");
@@ -481,9 +477,9 @@ int main(int argc,char** envp){
     register_sighandler(SIGINT, handler);
     register_sighandler(SIGTSTP, handler);
 
-    #if SIGDET == 1
+    if(SIGDET == 1){
         register_sighandler(SIGCHLD, handler);
-    #endif
+	}
 
     while(FOREVER != EOF){
         /* Get the name of the current working directory, store it in pwd */
@@ -492,7 +488,7 @@ int main(int argc,char** envp){
 
         if (returngetcwd == NULL) perror("Error");
         /* Print shell name and working directory */
-        sleep(1);
+        sleep(0.4);
         printf("birdly_dee:%s$ ", pwd);
         /* Read data from stdin, if we can't, stop the program */
         if (!fgets(inbuffer, MAX_INPUT, stdin)){
